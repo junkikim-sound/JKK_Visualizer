@@ -1,8 +1,8 @@
-# JKK_Visualizer
+<img width="654" height="239" alt="image" src="https://github.com/user-attachments/assets/a0c15191-443c-41d3-87a6-d0a408e39079" /># JKK_Visualizer
 
 ---
 ## 1. 설치하기
-JKK_ReaTools를 사용하기 위해서는 **ReaImGui**가 반드시 설치되어 있어야 합니다. 
+JKK_Visualizer를 사용하기 위해서는 **ReaImGui**가 반드시 설치되어 있어야 합니다. 
 > ReaImGui는 REAPER에서 현대적인 인터페이스(UI)를 만들 수 있게 해주는 확장 라이브러리로, 이 스크립트는 모든 UI를 ReaImGui 기반으로 구성하고 있기 때문에 필수 구성요소입니다.
 1. **[ReaPack](https://reapack.com/)의 설치**
     ReaImGui는 [**ReaPack**](https://reapack.com/)이라는 Extension을 통해 설치하는 것이 가장 간단하고 안전합니다. 
@@ -21,11 +21,12 @@ JKK_ReaTools를 사용하기 위해서는 **ReaImGui**가 반드시 설치되어
 4. **Extensions → ReaPack → Manage repositories**로 간 뒤, **Import/export... → Import repositories**
     <img width="383" height="140" alt="Screenshot 2025-12-30 at 23 00 01" src="https://github.com/user-attachments/assets/3a56e62d-a18f-4477-aaa5-163f6f32048d" />
 6. 창에 `https://github.com/junkikim-sound/JKK_Visualizer/raw/master/index.xml`를 입력하고 OK를 누릅니다.
-    <img width="501" height="175" alt="Screenshot 2025-12-30 at 23 00 54" src="https://github.com/user-attachments/assets/534a8455-e648-4baa-a8a5-ee2f0eca660d" />
-7. Install/update JKK_ReaTools를 통해 전체 설치하면 완료!
-    <img width="866" height="491" alt="Screenshot 2025-12-30 at 23 01 31" src="https://github.com/user-attachments/assets/26031222-f960-49ad-b85d-98213a5cefc8" />
-8. Actions에서 JKK_ReaTools를 찾아 실행할 수 있습니다.
-    <img width="1056" height="274" alt="Screenshot 2025-12-30 at 23 02 19" src="https://github.com/user-attachments/assets/769e7a8f-d595-4e90-982b-84e48ce89f25" />
+    <img width="654" height="239" alt="스크린샷 2026-01-16 151747" src="https://github.com/user-attachments/assets/6f16e11f-c414-4319-bf25-37651f52ac25" />
+7. Install/update JKK_Visualizer를 통해 전체 설치하면 완료!
+    <img width="1052" height="1011" alt="스크린샷 2026-01-16 151900" src="https://github.com/user-attachments/assets/f1748e89-34ad-4122-b9bf-9d3f226f97c7" />
+8. Actions에서 JKK_Visualizer와 JKK_Visualizer Editor를 찾아 실행할 수 있습니다.
+    <img width="1086" height="157" alt="스크린샷 2026-01-16 152108" src="https://github.com/user-attachments/assets/e43ca988-3175-448d-8168-67db26566aeb" />
+
 
      
 ---
