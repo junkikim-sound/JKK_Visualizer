@@ -1,5 +1,6 @@
 --========================================================
 -- @title JKK_Visualizer Editor
+-- @description JKK_Visualizer Editor
 -- @author Junki Kim
 -- @version 0.8.0
 -- @provides 
@@ -425,5 +426,6 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
             reaper.defer(loop)
         end
     end
+
 
 loop()
