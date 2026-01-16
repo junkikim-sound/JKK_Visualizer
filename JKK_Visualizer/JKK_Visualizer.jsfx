@@ -1,0 +1,206 @@
+desc:JKK_Visualizer
+noindex: true
+version: 0.8
+author: Junki Kim
+options:no_meter
+options:gmem=JKK_Visualizer_Mem
+
+// --- 슬라이더 설정 ---
+slider1:0.5<0,1,0.001>Visual Gain
+// slider2:0.25<0,1,0.001>Spectrum Floor (Macro %)
+
+@init
+    // === [기존 초기화] ===
+    slider2 = 0.25;
+    idx = 0;
+    buf_len = 100000;
+    fft_size = 4096;
+    fft_buf = 500000;
+    window = 600000;
+    fft_idx = 0;
+    i = 0;
+    loop(fft_size,
+        window[i] = 0.54 - 0.46 * cos(2 * $pi * i / (fft_size - 1));
+        i += 1;
+    );
+
+    last_m_visual = -144; 
+    last_s_visual = -144;
+    m_peak_hold = -144;
+    decay_speed = 0.1;
+
+    // === [LUFS 엔진 초기화 (Cockos Loudness Meter 기반)] ===
+    // 400ms(M), 3000ms(S) 윈도우 버퍼 크기 계산
+    LOUD_METER_UPDATE = 0.1; // 100ms 단위 업데이트
+    m_win_cnt = 0.4 / LOUD_METER_UPDATE; // Momentary Window (400ms)
+    s_win_cnt = 3.0 / LOUD_METER_UPDATE; // Short-term Window (3000ms)
+
+    // 버퍼 할당 (700000번지 이후 사용)
+    rms_buf = 800000;
+    lufs_buf = 810000;
+    lufs_buf2 = 820000;
+
+    // 변수 초기화
+    win_pos = 0;
+    win_cnt = 0;
+    cur_buf = 0;
+    cur_buf2 = 0;
+    
+    lufs_m_sum = 0; lufs_s_sum = 0;
+    lufs_i_sum = 0; lufs_i_cnt = 0;
+    
+    lufs_m_db = -144; lufs_s_db = -144; lufs_i_db = -144;
+
+    // 필터 상태 변수
+    f1p1=f1p2=f2p1=f2p2=0;
+
+    // LUFS 필터 계수 계산 함수
+    function init_lufs_filters() (
+      db=3.999843853973347; f0=1681.974450955533; Q=0.7071752369554196;
+      K=tan($pi*f0/srate); Vh=pow(10, db/20); Vb=pow(Vh, 0.4996667741545416);
+      a0=1+K/Q+K*K;
+      f1a1=2*(K*K-1)/a0; f1a2=(1-K/Q+K*K)/a0;
+      f1b0=(Vh+Vb*K/Q+K*K)/a0; f1b1=2*(K*K-Vh)/a0; f1b2=(Vh-Vb*K/Q+K*K)/a0;
+
+      f0=38.13547087602444; Q=0.5003270373238773;
+      K=tan($pi*f0/srate);
+      f2a1=2*(K*K-1)/(1+K/Q+K*K); f2a2=(1-K/Q+K*K)/(1+K/Q+K*K);
+      f2b0=1; f2b1=-2; f2b2=1;
+    );
+    
+    init_lufs_filters();
+    
+    // 윈도우 길이 (샘플 단위)
+    win_len = (LOUD_METER_UPDATE * srate)|0;
+    i_win_len = 1 / (m_win_cnt * win_len); // M용 정규화 계수
+    i_win_len2 = 1 / (s_win_cnt * win_len); // S용 정규화 계수
+
+@slider
+    gmem[2] = slider1;
+    gmem[3] = slider2;
+
+@block
+    gmem[1] = srate;
+
+    abs(gmem[2] - slider1) > 0.00001 ? (
+        slider1 = gmem[2];        // 1. 내부 변수 업데이트
+        slider_automate(slider1); // 2. UI 슬라이더 위치 강제 이동 (중요!)
+    );
+    
+    // [리셋 체크] Lua에서 30번지에 1을 쓰면 리셋
+    gmem[30] > 0 ? (
+        lufs_i_sum = 0;
+        lufs_i_cnt = 0;
+        lufs_i_db = -144;
+        gmem[30] = 0; // 리셋 완료 확인
+    );
+
+    // 샘플레이트 변경 시 필터 재계산
+    srate != last_sr ? (
+        init_lufs_filters();
+        win_len = (LOUD_METER_UPDATE * srate)|0;
+        i_win_len = 1 / (m_win_cnt * win_len);
+        i_win_len2 = 1 / (s_win_cnt * win_len);
+        last_sr = srate;
+    );
+
+@sample
+    // === [1. 기존 오디오 처리] ===
+    in_l = spl0;
+    in_r = spl1;
+    in_mono = (in_l + in_r) * 0.5;
+
+    // gmem에 파형 저장 (Gonio/Scope용)
+    gmem[10000 + idx] = in_l;
+    gmem[110000 + idx] = in_r;
+    idx = (idx + 1) % buf_len;
+    gmem[0] = idx;
+
+    // FFT 처리
+    fft_buf[fft_idx] = in_mono * window[fft_idx];
+    fft_buf[fft_size + fft_idx] = 0;
+    fft_idx += 1;
+    fft_idx >= fft_size ? (
+        fft_idx = 0;
+        memcpy(700000, fft_buf, fft_size * 2);
+        fft(700000, fft_size);
+        fft_permute(700000, fft_size);
+        k = 0;
+        loop(fft_size/2,
+            re = 700000[k*2]; im = 700000[k*2+1];
+            gmem[300000 + k] = sqrt(re*re + im*im);
+            k += 1;
+        );
+    );
+
+    // === [2. LUFS 계산 엔진] ===
+    // K-Weighting Filter (Mono Sum or Dual Mono Average)
+    // 여기서는 간단히 L/R 각각 필터링 후 합산
+    
+    // Left Filter
+    l_s1 = f1b0*in_l + f1b1*f1p1_L + f1b2*f1p2_L - f1a1*f1y1_L - f1a2*f1y2_L;
+    f1p2_L=f1p1_L; f1p1_L=in_l; f1y2_L=f1y1_L; f1y1_L=l_s1;
+    l_k = f2b0*l_s1 + f2b1*f2p1_L + f2b2*f2p2_L - f2a1*f2y1_L - f2a2*f2y2_L;
+    f2p2_L=f2p1_L; f2p1_L=l_s1; f2y2_L=f2y1_L; f2y1_L=l_k;
+
+    // Right Filter
+    r_s1 = f1b0*in_r + f1b1*f1p1_R + f1b2*f1p2_R - f1a1*f1y1_R - f1a2*f1y2_R;
+    f1p2_R=f1p1_R; f1p1_R=in_r; f1y2_R=f1y1_R; f1y1_R=r_s1;
+    r_k = f2b0*r_s1 + f2b1*f2p1_R + f2b2*f2p2_R - f2a1*f2y1_R - f2a2*f2y2_R;
+    f2p2_R=f2p1_R; f2p1_R=r_s1; f2y2_R=f2y1_R; f2y1_R=r_k;
+
+    // Power Sum (순간 에너지)
+    curr_energy = l_k*l_k + r_k*r_k;
+    
+    // Window Accumulation (100ms 단위로 묶어서 처리)
+    lval += curr_energy;
+    
+    (win_pos += 1) >= win_len ? (
+        win_pos = 0;
+        win_cnt += 1;
+        
+        // Circular Buffer Logic
+        prev_lval = lufs_buf[cur_buf];
+        lufs_buf[cur_buf] = lval;
+        prev_lval2 = lufs_buf2[cur_buf2];
+        lufs_buf2[cur_buf2] = lval;
+
+        (cur_buf += 1) >= m_win_cnt ? cur_buf = 0;
+        (cur_buf2 += 1) >= s_win_cnt ? cur_buf2 = 0;
+
+        // Sliding Window Sum update
+        lufs_m_sum += (lval - prev_lval) * i_win_len;   // Momentary
+        lufs_s_sum += (lval - prev_lval2) * i_win_len2; // Short-term
+
+        lval = 0; 
+        
+        // --- [1. Momentary LUFS 계산 및 스무딩] ---
+        // 실제 값 계산
+        real_m_db = (lufs_m_sum > 0) ? (-0.691 + log(lufs_m_sum) * 10 / log(10)) : -144;
+        real_m_db > m_peak_hold ? m_peak_hold = real_m_db;
+
+        // [시각적 스무딩 적용]
+        // 실제 값이 더 크면 즉시 반영(Attack), 작으면 천천히 하락(Decay)
+        real_m_db > last_m_visual ? (
+            last_m_visual = real_m_db;
+        ) : (
+            last_m_visual -= decay_speed; 
+        );
+        gmem[20] = last_m_visual; // 스무딩된 값 전송
+        gmem[22] = m_peak_hold;   // 최고점 값
+
+        // --- [2. Short-term LUFS 계산 및 스무딩] ---
+        real_s_db = (lufs_s_sum > 0) ? (-0.691 + log(lufs_s_sum) * 10 / log(10)) : -144;
+
+        real_s_db > last_s_visual ? (
+            last_s_visual = real_s_db;
+        ) : (
+            last_s_visual -= decay_speed;
+        );
+        gmem[21] = last_s_visual; // 스무딩된 값 전송
+    );
+
+@gfx 120 30
+    gfx_set(0, 1, 0, 1);
+    gfx_x = 5; gfx_y = 10;
+    gfx_drawstr("DATA SERVER ACTIVE");
