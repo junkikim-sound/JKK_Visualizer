@@ -1,7 +1,7 @@
-desc:JKK_Visualizer
 noindex: true
 version: 0.8
 author: Junki Kim
+
 options:no_meter
 options:gmem=JKK_Visualizer_Mem
 
