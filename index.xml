@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaPack Repository Template" commit="0dba11e59db0d6510be5a74a6a38a8193f2901ab">
+<index version="1" name="JKK_Visualizer" commit="0dba11e59db0d6510be5a74a6a38a8193f2901ab">
   <category name="JKK_Visualizer">
     <reapack name="JKK_Visualizer Editor.lua" type="script" desc="JKK_Visualizer Editor">
       <version name="0.8.0" author="Junki Kim" time="2026-01-16T03:17:51Z">
