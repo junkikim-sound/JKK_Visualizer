@@ -1,6 +1,5 @@
 --========================================================
 -- @title JKK_Theme
--- @description JKK_Theme
 -- @author Junki Kim
 -- @noindex
 --========================================================
@@ -109,4 +108,5 @@ end
 
 
 return { ApplyTheme = ApplyTheme }
+
 
