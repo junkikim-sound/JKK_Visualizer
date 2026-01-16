@@ -12,9 +12,9 @@ local ctx = reaper.ImGui_CreateContext('JKK_Visualizer Editor')
 local sans_font = reaper.ImGui_CreateFont('Arial', 14)
 reaper.ImGui_Attach(ctx, sans_font)
 
-local image_path = reaper.GetResourcePath() .. "/Scripts/JKK_Visualizer/LOGO.png"
+local image_path = reaper.GetResourcePath() .. "/Scripts/JKK_Visualizer/JKK_Visualizer/LOGO.png"
 local image_logo = reaper.ImGui_CreateImage(image_path)
-local theme_path = reaper.GetResourcePath() .. "/Scripts/JKK_Visualizer/JKK_Theme.lua"
+local theme_path = reaper.GetResourcePath() .. "/Scripts/JKK_Visualizer/JKK_Visualizer/JKK_Theme.lua"
 local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyTheme) 
                    or function(ctx) return 0, 0 end
 
