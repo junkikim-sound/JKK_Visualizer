@@ -23,7 +23,7 @@
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel0 \b \fs36 JKK_Visualizer\par}
 {\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 1. \u49444 ?\u52824 ?\u54616 ?\u44592 ?\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 JKK_ReaTools\u47484 ? \u49324 ?\u50857 ?\u54616 ?\u44592 ? \u50948 ?\u54644 ?\u49436 ?\u45716 ? {\b ReaImGui}\u44032 ? \u48152 ?\u46300 ?\u49884 ? \u49444 ?\u52824 ?\u46104 ?\u50612 ? \u51080 ?\u50612 ?\u50556 ? \u54633 ?\u45768 ?\u45796 ?.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 JKK_Visualizer\u47484 ? \u49324 ?\u50857 ?\u54616 ?\u44592 ? \u50948 ?\u54644 ?\u49436 ?\u45716 ? {\b ReaImGui}\u44032 ? \u48152 ?\u46300 ?\u49884 ? \u49444 ?\u52824 ?\u46104 ?\u50612 ? \u51080 ?\u50612 ?\u50556 ? \u54633 ?\u45768 ?\u45796 ?.\par}
 {\pard \ql \f0 \sa180 \li720 \fi0 ReaImGui\u45716 ? REAPER\u50640 ?\u49436 ? \u54788 ?\u45824 ?\u51201 ?\u51064 ? \u51064 ?\u53552 ?\u54168 ?\u51060 ?\u49828 ?(UI)\u47484 ? \u47564 ?\u46308 ? \u49688 ? \u51080 ?\u44172 ? \u54644 ?\u51452 ?\u45716 ? \u54869 ?\u51109 ? \u46972 ?\u51060 ?\u48652 ?\u47084 ?\u47532 ?\u47196 ?, \u51060 ? \u49828 ?\u53356 ?\u47549 ?\u53944 ?\u45716 ? \u47784 ?\u46304 ? UI\u47484 ? ReaImGui \u44592 ?\u48152 ?\u51004 ?\u47196 ? \u44396 ?\u49457 ?\u54616 ?\u44256 ? \u51080 ?\u44592 ? \u46412 ?\u47928 ?\u50640 ? \u54596 ?\u49688 ? \u44396 ?\u49457 ?\u50836 ?\u49548 ?\u51077 ?\u45768 ?\u45796 ?.\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 1.\tx360\tab {\b {\field{\*\fldinst{HYPERLINK "https://reapack.com/"}}{\fldrslt{\ul
 ReaPack
@@ -55,8 +55,8 @@ ReaPack
 {\pard \ql \f0 \sa0 \li720 \fi-360 2.\tx360\tab \u44160 ?\u49353 ?\u52285 ?\u50640 ? {\f1 ImGui} \u51077 ?\u47141 ?\u54620 ? \u54980 ?, \u50500 ?\u47000 ?\u50752 ? \u44057 ?\u51008 ? \u50529 ?\u49496 ? \u46608 ?\u45716 ? \u49828 ?\u53356 ?\u47549 ?\u53944 ?\u44032 ? \u48372 ?\u51060 ?\u47732 ? \u51221 ?\u49345 ? \u49444 ?\u52824 ?\u46108 ? \u44163 ?\u51077 ?\u45768 ?\u45796 ?.\line {\b ReaImGui: Demo.lua \u46972 ?\u45716 ? \u49828 ?\u53356 ?\u47549 ?\u53944 ?\u47484 ? \u52286 ?\u51004 ?\u49464 ?\u50836 ?!}\sa180\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 4.\tx360\tab {\b Extensions \u8594 ? ReaPack \u8594 ? Manage repositories}\u47196 ? \u44036 ? \u46244 ?, {\b Import/export... \u8594 ? Import repositories} \par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 5.\tx360\tab \u52285 ?\u50640 ? {\f1 https://github.com/junkikim-sound/JKK_Visualizer/raw/master/index.xml}\u47484 ? \u51077 ?\u47141 ?\u54616 ?\u44256 ? OK\u47484 ? \u45572 ?\u47493 ?\u45768 ?\u45796 ?. \par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 6.\tx360\tab Install/update JKK_ReaTools\u47484 ? \u53685 ?\u54644 ? \u51204 ?\u52404 ? \u49444 ?\u52824 ?\u54616 ?\u47732 ? \u50756 ?\u47308 ?! \par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 7.\tx360\tab Actions\u50640 ?\u49436 ? JKK_ReaTools\u47484 ? \u52286 ?\u50500 ? \u49892 ?\u54665 ?\u54624 ? \u49688 ? \u51080 ?\u49845 ?\u45768 ?\u45796 ?. \sa180\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 6.\tx360\tab Install/update JKK_Visualizer\u47484 ? \u53685 ?\u54644 ? \u51204 ?\u52404 ? \u49444 ?\u52824 ?\u54616 ?\u47732 ? \u50756 ?\u47308 ?! \par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 7.\tx360\tab Actions\u50640 ?\u49436 ? JKK_Visualizer\u50752 ? JKK_Visualizer Editor\u47484 ? \u52286 ?\u50500 ? \u49892 ?\u54665 ?\u54624 ? \u49688 ? \u51080 ?\u49845 ?\u45768 ?\u45796 ?. \sa180\par}
 {\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 2. \u49548 ?\u44060 ?\u54616 ?\u44592 ?\par}
 }
