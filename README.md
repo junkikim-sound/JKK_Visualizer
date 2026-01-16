@@ -1,4 +1,4 @@
-<img width="654" height="239" alt="image" src="https://github.com/user-attachments/assets/a0c15191-443c-41d3-87a6-d0a408e39079" /># JKK_Visualizer
+# JKK_Visualizer
 
 ---
 ## 1. 설치하기
@@ -25,7 +25,7 @@ JKK_Visualizer를 사용하기 위해서는 **ReaImGui**가 반드시 설치되�
 7. Install/update JKK_Visualizer를 통해 전체 설치하면 완료!
     <img width="1052" height="1011" alt="스크린샷 2026-01-16 151900" src="https://github.com/user-attachments/assets/f1748e89-34ad-4122-b9bf-9d3f226f97c7" />
 8. Actions에서 JKK_Visualizer와 JKK_Visualizer Editor를 찾아 실행할 수 있습니다.
-    <img width="1086" height="157" alt="스크린샷 2026-01-16 152108" src="https://github.com/user-attachments/assets/e43ca988-3175-448d-8168-67db26566aeb" />
+    <img width="654" height="239" alt="image" src="https://github.com/user-attachments/assets/a0c15191-443c-41d3-87a6-d0a408e39079" />
 
 
      
