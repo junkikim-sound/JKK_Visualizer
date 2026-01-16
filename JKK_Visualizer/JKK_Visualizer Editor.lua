@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer Editor
 -- @description JKK_Visualizer Editor
 -- @author Junki Kim
--- @version 0.8.0
+-- @version 0.8.2
 -- @provides
 --     [nomain] JKK_Theme.lua
 --     [nomain] LOGO.png

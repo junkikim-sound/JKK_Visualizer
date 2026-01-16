@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 0.8.0
+-- @version 0.8.2
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
