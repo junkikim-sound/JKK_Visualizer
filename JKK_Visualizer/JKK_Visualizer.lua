@@ -1,6 +1,6 @@
 --========================================================
--- @title JKK_Visualizer Editor
--- @description JKK_Visualizer Editor
+-- @title JKK_Visualizer
+-- @description JKK_Visualizer
 -- @author Junki Kim
 -- @version 0.8.0
 -- @provides
@@ -798,3 +798,4 @@ local ui_order = {1, 2, 3, 4, 5}
 
 
 run()
+
