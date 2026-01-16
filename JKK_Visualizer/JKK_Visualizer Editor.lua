@@ -3,9 +3,6 @@
 -- @description JKK_Visualizer Editor
 -- @author Junki Kim
 -- @version 0.8.0
--- @provides 
---     [nomain] JKK_Theme.lua
---     [nomain] LOGO.png
 --========================================================
 
 local ctx = reaper.ImGui_CreateContext('JKK_Visualizer Editor')
@@ -429,3 +426,4 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
 
 
 loop()
+
