@@ -4,10 +4,7 @@
 -- @author Junki Kim
 -- @version 0.8.0
 -- @provides 
---     [nomain] JKK_Visualizer Editor.lua
 --     [effect] JKK_Visualizer.jsfx
---     [nomain] JKK_Theme.lua
---     [nomain] LOGO.png
 --========================================================
 options = reaper.gmem_attach('JKK_Visualizer_Mem') 
 
@@ -801,5 +798,6 @@ local ui_order = {1, 2, 3, 4, 5}
 
 
 run()
+
 
 
