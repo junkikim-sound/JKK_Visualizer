@@ -27,7 +27,8 @@ ReaImGui must be installed to use JKK_Visualizer.
     1. Go to Extensions → ReaPack → Manage repositories.
         <img width="383" height="140" alt="Screenshot 2025-12-30 at 23 00 01" src="https://github.com/user-attachments/assets/3a56e62d-a18f-4477-aaa5-163f6f32048d" />
     2. Select Import/export... → Import repositories.
-    3. Enter the following URL and click OK: `**https://github.com/junkikim-sound/JKK_Visualizer/raw/master/index.xml**`
+    3. Enter the following URL and click OK: 
+       > `https://github.com/junkikim-sound/JKK_Visualizer/raw/master/index.xml`
         <img width="490" height="171" alt="Screenshot 2026-01-17 at 16 06 25" src="https://github.com/user-attachments/assets/a01b1d18-7e06-4635-8c12-df5c3fb95ee7" />
     4. Find **JKK_Visualizer** in the package list, right-click to **install**, and click **Apply**.
         <img width="776" height="477" alt="Screenshot 2026-01-17 at 16 06 09" src="https://github.com/user-attachments/assets/b7bc3ceb-e893-4ff8-9f7f-6792095f4317" />
