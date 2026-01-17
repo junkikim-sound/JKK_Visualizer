@@ -79,11 +79,11 @@ the ReaPack websit
 {\pard \ql \f0 \sa0 \li720 \fi-360 1.\tx360\tab Open REAPER\u8217's Action List (Shortcut: {\f1 ?}).\par}
 {\pard \ql \f0 \sa0 \li720 \fi-360 2.\tx360\tab Search for {\f1 ImGui}. If you see a script named {\b ReaImGui: Demo.lua}, the installation was successful.\sa180\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 4.\tx360\tab Import JKK_Visualizer Repository\par}
-{\pard \ql \f0 \sa180 \li720 \fi-360 1.\tx360\tab Go to Extensions \u8594 ? ReaPack \u8594 ? Manage repositories.\par}
-{\pard \ql \f0 \sa180 \li720 \fi-360 2.\tx360\tab Select Import/export... \u8594 ? Import repositories.\par}
-{\pard \ql \f0 \sa180 \li720 \fi-360 3.\tx360\tab Enter the following URL and click OK: {\f1 **https://github.com/junkikim-sound/JKK_Visualizer/raw/master/index.xml**} \par}
-{\pard \ql \f0 \sa180 \li720 \fi-360 4.\tx360\tab Find {\b JKK_Visualizer} in the package list, right-click to {\b install}, and click {\b Apply}. \par}
-{\pard \ql \f0 \sa180 \li720 \fi-360 5.\tx360\tab You can now find and run JKK_Visualizer and JKK_Visualizer Editor in your Actions. \sa180\sa180\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 1.\tx360\tab Go to Extensions \u8594 ? ReaPack \u8594 ? Manage repositories. \par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 2.\tx360\tab Select Import/export... \u8594 ? Import repositories.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 3.\tx360\tab Enter the following URL and click OK: {\f1 **https://github.com/junkikim-sound/JKK_Visualizer/raw/master/index.xml**} \par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 4.\tx360\tab Find {\b JKK_Visualizer} in the package list, right-click to {\b install}, and click {\b Apply}. \par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 5.\tx360\tab You can now find and run JKK_Visualizer and JKK_Visualizer Editor in your Actions. \sa180\sa180\par}
 {\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 \u55357 ?\u56960 ? 2. Introduction\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 {\cf1 [image: https://github.com/user-attachments/assets/908ef485-3651-493e-9ec7-62b69f6dda90]\cf0}\par}
