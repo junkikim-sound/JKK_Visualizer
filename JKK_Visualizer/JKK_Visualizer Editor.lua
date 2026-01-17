@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer Editor
 -- @description JKK_Visualizer Editor
 -- @author Junki Kim
--- @version 0.8.3
+-- @version 0.8.4
 -- @provides
 --     [nomain] JKK_Theme.lua
 --     [nomain] LOGO.png
@@ -37,8 +37,8 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         ["LOGO"]    = { "Sound Designer 김준기 (Junki Kim)", "junkikim.sound@gmail.com" },
         ["GAIN"]    = { "Signal Gain",      "Adjusts the visual sensitivity of the visualizer.\n비주얼라이저의 반응 감도를 조절합니다." },
         ["FONT"]    = { "Font Scale",       "Adjusts the size of all text at the same ratio.\n모든 텍스트의 크기를 동일한 비율로 조절합니다." },
-        ["ATTACK"]  = { "Response Speed (Attack)", "비주얼라이저가 신호에 반응하는 속도를 조절합니다.\nAdjusts how quickly the visualizer reacts to signals." },
-        ["RELEASE"] = { "Decay Speed (Release)", "비주얼라이저의 잔상이 사라지는 속도를 조절합니다.\nAdjusts how quickly the visualizer fades out." },
+        ["ATTACK"]  = { "Response Speed (Attack)", "Adjusts how quickly the visualizer reacts to signals.\n비주얼라이저가 신호에 반응하는 속도를 조절합니다." },
+        ["RELEASE"] = { "Decay Speed (Release)", "Adjusts how quickly the visualizer fades out.\n비주얼라이저의 잔상이 사라지는 속도를 조절합니다." },
         ["ORDER"]   = { "Module Order",     "Drag and drop items to change the display order of the visualizer modules.\n마우스로 항목을 드래그하여 비주얼라이저의 표시 순서를 변경합니다." },
         ["BG"]      = { "Background",       "Sets the background color of the visualizer.\n비주얼라이저의 배경 색상을 조절합입니다." },
         ["LINE"]    = { "Grid & Lines",     "Sets the color for grids and outlines.\n그리드 및 외곽선의 색상을 조절합니다." },

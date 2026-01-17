@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 0.8.3
+-- @version 0.8.4
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -45,7 +45,7 @@ local ui_order = {1, 2, 3, 4, 5}
     local dot3_r, dot3_g, dot3_b, dot3_a = 227/255, 219/255, 142/255, 1.0
     local gr_peak, gg_peak, gb_peak = 255/255, 000/255, 000/255      -- Peak 컬러
         local gonio_peak_hold_time = 2.0  -- 피크 유지 시간 (초)
-        local gonio_max_peak_dots = 100   -- 한 화면에 표시할 최대 피크 점 개수
+        local gonio_max_peak_dots = 150   -- 한 화면에 표시할 최대 피크 점 개수
         local gonio_peaks = {} -- 피크 좌표를 저장할 테이블
 
     -- Symbiote Color
@@ -238,7 +238,7 @@ local ui_order = {1, 2, 3, 4, 5}
     function draw_symbiote(x, y, w, h, gain)
         ---------------------초기값
         local base_attack = 0.3
-        local base_release = 0.08
+        local base_release = 0.3
         ---------------------초기값
 
         local sym_base_radius = math.min(w, h) * 0.45 * sym_size_ratio
@@ -269,10 +269,10 @@ local ui_order = {1, 2, 3, 4, 5}
 
         -- 2. [저음 데이터] (크기 제어용)
         local bass_sum = 0
-        for k = 5, 22 do 
+        for k = 2, 16 do 
             bass_sum = bass_sum + reaper.gmem_read(300000 + k)
         end
-        local current_bass = (bass_sum / 21) * gain * 0.045
+        local current_bass = (bass_sum / 16) * gain * 0.032
         local size_attack = base_attack * g_signal_attack
         local size_release = base_release * g_signal_release
         
@@ -287,8 +287,11 @@ local ui_order = {1, 2, 3, 4, 5}
         spike_raw = math.min(0.5, spike_raw)
 
         -- 가시 반응 속도 
-        local spike_smoothing = (spike_raw > sym_spikiness) and 1 or 1
-        sym_spikiness = sym_spikiness + (spike_raw - sym_spikiness) * spike_smoothing
+        local spike_attack = size_attack * 1.5 
+        local spike_release = size_release * 1.0
+
+        local spike_smoothing = (spike_raw > sym_spikiness) and spike_attack or spike_release
+        sym_spikiness = sym_spikiness + (spike_raw - sym_spikiness) * math.min(1.0, spike_smoothing)
 
         -- 속도 누적
         local cur_time = reaper.time_precise()
