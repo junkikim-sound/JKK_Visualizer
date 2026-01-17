@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer Editor
 -- @description JKK_Visualizer Editor
 -- @author Junki Kim
--- @version 0.8.2
+-- @version 0.8.3
 -- @provides
 --     [nomain] JKK_Theme.lua
 --     [nomain] LOGO.png
@@ -206,7 +206,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         local textcol_gray = 0x808080FF
         local pushed_vars, pushed_cols = ApplyTheme(ctx)
         reaper.ImGui_PushFont(ctx, sans_font, 12)
-        reaper.ImGui_SetNextWindowSize(ctx, 530, 500, reaper.ImGui_Cond_Once())
+        reaper.ImGui_SetNextWindowSize(ctx, 530, 510, reaper.ImGui_Cond_Once())
 
         local visible, open = reaper.ImGui_Begin(ctx, 'JKK_Visualizer Theme Editor v0.5', true,
             reaper.ImGui_WindowFlags_NoCollapse())
@@ -312,36 +312,43 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                     reaper.ImGui_Spacing(ctx)
             -- Signal Speed ========================================================
                 -- Attack Slider
-                local current_att = reaper.gmem_read(4)
-                if current_att <= 0 then current_att = 1.0 end
-                
-                reaper.ImGui_SetNextItemWidth(ctx, -1)
-                local changed_att, new_att = reaper.ImGui_SliderDouble(ctx, "##Attack", current_att, 0.1, 3.0, "Response Speed: %.2fx")
+                    local current_att = reaper.gmem_read(4)
+                    if current_att <= 0 then current_att = 1.0 end
+
+                    reaper.ImGui_SetNextItemWidth(ctx, -1)
+                    local changed_att, new_att = reaper.ImGui_SliderDouble(ctx, "##Attack", current_att, 0.1, 3.0, "Response Speed: %.2fx")
+
+                    -- [수정] changed -> changed_att 로 변경
                     if reaper.ImGui_IsItemClicked(ctx, 1) then 
                         new_att = 1.0
-                        changed = true
+                        changed_att = true
                     end
+
                     if changed_att then
                         reaper.gmem_write(4, new_att)
                         SaveAllSettings()
                     end
                     if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "ATTACK" end
 
-                -- Release Slider
-                local current_rel = reaper.gmem_read(5)
-                if current_rel <= 0 then current_rel = 1.0 end
+                    -- Release Slider
+                    local current_rel = reaper.gmem_read(5)
+                    if current_rel <= 0 then current_rel = 1.0 end
 
-                reaper.ImGui_SetNextItemWidth(ctx, -1)
-                local changed_rel, new_rel = reaper.ImGui_SliderDouble(ctx, "##Release", current_rel, 0.1, 3.0, "Decay Speed: %.2fx")
+                    reaper.ImGui_SetNextItemWidth(ctx, -1)
+                    local changed_rel, new_rel = reaper.ImGui_SliderDouble(ctx, "##Release", current_rel, 0.1, 3.0, "Decay Speed: %.2fx")
+
+                    -- [수정] changed -> changed_rel 로 변경
                     if reaper.ImGui_IsItemClicked(ctx, 1) then 
                         new_rel = 1.0
-                        changed = true
+                        changed_rel = true
                     end
+
                     if changed_rel then
                         reaper.gmem_write(5, new_rel)
                         SaveAllSettings()
                     end
                     if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "RELEASE" end
+                    reaper.ImGui_Spacing(ctx)
 
             -- Order ========================================================
                 local module_names = {[1]="   ▩ LUFS", [2]="   ▩ Gonio", [3]="   ▩ Symbiote", [4]="   ▩ Scope", [5]="   ▩ Spectrum"}

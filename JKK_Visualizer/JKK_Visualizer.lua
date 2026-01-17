@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 0.8.2
+-- @version 0.8.3
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -241,8 +241,21 @@ local ui_order = {1, 2, 3, 4, 5}
         local base_release = 0.08
         ---------------------초기값
 
-        local cx, cy = x + w * 0.5, y + h * 0.5
-        local sym_base_radius = math.min(w, h) * 0.05 * sym_size_ratio
+        local sym_base_radius = math.min(w, h) * 0.45 * sym_size_ratio
+        local fixed_cx, fixed_cy = x + w * 0.5, y + h * 0.5
+        
+        -- [Drift Logic] 움직임 계산
+        local time = reaper.time_precise()
+        local drift_radius = 10.0 -- 움직임 반경
+        local drift_speed = 0.7   -- 움직임 속도
+        
+        local drift_x = math.sin(time * drift_speed) * drift_radius 
+                      + math.cos(time * drift_speed * 1.3) * (drift_radius * 0.5)
+        local drift_y = math.cos(time * drift_speed * 0.8) * drift_radius 
+                      + math.sin(time * drift_speed * 1.7) * (drift_radius * 0.5)
+
+        -- 그리기 중심점 (심비오트의 실제 위치 = 고정점 + 오차)
+        local cx, cy = fixed_cx + drift_x, fixed_cy + drift_y
         
         -- 1. [데이터 읽기]
         local write_idx = reaper.gmem_read(0)
@@ -259,7 +272,7 @@ local ui_order = {1, 2, 3, 4, 5}
         for k = 5, 22 do 
             bass_sum = bass_sum + reaper.gmem_read(300000 + k)
         end
-        local current_bass = (bass_sum / 21) * gain * 0.4
+        local current_bass = (bass_sum / 21) * gain * 0.045
         local size_attack = base_attack * g_signal_attack
         local size_release = base_release * g_signal_release
         
@@ -280,7 +293,7 @@ local ui_order = {1, 2, 3, 4, 5}
         -- 속도 누적
         local cur_time = reaper.time_precise()
         if not last_time then last_time = cur_time end
-        sym_time_accum = sym_time_accum + (cur_time - last_time) * (0.3 + target_vol * 25.0)
+        sym_time_accum = sym_time_accum + (cur_time - last_time) * (0.3 + target_vol * 12.0)
         last_time = cur_time
 
         -- 3. [벽 돌파 방지]
@@ -295,21 +308,27 @@ local ui_order = {1, 2, 3, 4, 5}
 
         for i = 0, sym_points do
             local angle = (i / sym_points) * 2 * math.pi
-            local n1 = math.sin(angle * 2 + sym_time_accum * sym_noise_speed)
-            local n2 = math.cos(angle * 3 - sym_time_accum * (sym_noise_speed * 0.5))
-            local wobble = (n1 + n2) * 0.15
+            local n1 = math.sin(angle * 3 + sym_time_accum * sym_noise_speed)
+            local n2 = math.cos(angle * 5 - sym_time_accum * (sym_noise_speed * 0.2))
+            local wobble = (n1 + n2) * 0.12
             
-            local spike = math.sin(angle * 6 + sym_time_accum) * sym_spikiness * 0.2
+            local spike = math.sin(angle * 8 + sym_time_accum) * sym_spikiness * 0.3
             
-            local r_final = clamped_r * (1 + wobble + spike)
+            local r_final = raw_r_dyn * (1 + wobble + spike)
             
             local dx = math.cos(angle) * r_final * stretch
             local dy = math.sin(angle) * r_final * stretch
             
-            local dist = math.sqrt(dx*dx + dy*dy)
-            if dist > max_allowed_r then
-                dx = dx * (max_allowed_r / dist)
-                dy = dy * (max_allowed_r / dist)
+            local abs_dx = dx + drift_x -- 고정점으로부터의 거리 X
+            local abs_dy = dy + drift_y -- 고정점으로부터의 거리 Y
+            local dist_from_fixed = math.sqrt(abs_dx*abs_dx + abs_dy*abs_dy)
+
+            if dist_from_fixed > max_allowed_r then
+                local scale = max_allowed_r / dist_from_fixed
+                local constrained_abs_dx = abs_dx * scale
+                local constrained_abs_dy = abs_dy * scale
+                dx = constrained_abs_dx - drift_x
+                dy = constrained_abs_dy - drift_y
             end
             
             shape_points[i] = { dx = dx, dy = dy }
