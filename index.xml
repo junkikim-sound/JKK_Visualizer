@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="JKK_Visualizer" commit="d353c5e780acd2f579048a25e605836dc951d70d">
+<index version="1" name="JKK_Visualizer" commit="e02f39bc778053a5aa510a3c20cd04633a49f688">
   <category name="JKK_Visualizer">
     <reapack name="JKK_Visualizer Editor.lua" type="script" desc="JKK_Visualizer Editor">
       <version name="0.8.0" author="Junki Kim" time="2026-01-16T12:49:56Z">
@@ -17,6 +17,11 @@
         <source file="JKK_Theme.lua">https://github.com/junkikim-sound/JKK_Visualizer/raw/d353c5e780acd2f579048a25e605836dc951d70d/JKK_Visualizer/JKK_Theme.lua</source>
         <source file="LOGO.png">https://github.com/junkikim-sound/JKK_Visualizer/raw/d353c5e780acd2f579048a25e605836dc951d70d/JKK_Visualizer/LOGO.png</source>
       </version>
+      <version name="0.8.4" author="Junki Kim" time="2026-01-17T07:05:13Z">
+        <source main="main">https://github.com/junkikim-sound/JKK_Visualizer/raw/e02f39bc778053a5aa510a3c20cd04633a49f688/JKK_Visualizer/JKK_Visualizer%20Editor.lua</source>
+        <source file="JKK_Theme.lua">https://github.com/junkikim-sound/JKK_Visualizer/raw/e02f39bc778053a5aa510a3c20cd04633a49f688/JKK_Visualizer/JKK_Theme.lua</source>
+        <source file="LOGO.png">https://github.com/junkikim-sound/JKK_Visualizer/raw/e02f39bc778053a5aa510a3c20cd04633a49f688/JKK_Visualizer/LOGO.png</source>
+      </version>
     </reapack>
     <reapack name="JKK_Visualizer.lua" type="script" desc="JKK_Visualizer">
       <version name="0.8.0" author="Junki Kim" time="2026-01-16T12:49:56Z">
@@ -31,6 +36,10 @@
         <source main="main">https://github.com/junkikim-sound/JKK_Visualizer/raw/d353c5e780acd2f579048a25e605836dc951d70d/JKK_Visualizer/JKK_Visualizer.lua</source>
         <source type="effect" file="JKK_Visualizer.jsfx">https://github.com/junkikim-sound/JKK_Visualizer/raw/d353c5e780acd2f579048a25e605836dc951d70d/JKK_Visualizer/JKK_Visualizer.jsfx</source>
       </version>
+      <version name="0.8.4" author="Junki Kim" time="2026-01-17T07:05:13Z">
+        <source main="main">https://github.com/junkikim-sound/JKK_Visualizer/raw/e02f39bc778053a5aa510a3c20cd04633a49f688/JKK_Visualizer/JKK_Visualizer.lua</source>
+        <source type="effect" file="JKK_Visualizer.jsfx">https://github.com/junkikim-sound/JKK_Visualizer/raw/e02f39bc778053a5aa510a3c20cd04633a49f688/JKK_Visualizer/JKK_Visualizer.jsfx</source>
+      </version>
     </reapack>
   </category>
   <metadata>
@@ -39,44 +48,59 @@
 \widowctrl\hyphauto
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel0 \b \fs36 JKK_Visualizer\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 {\b A Professional Audio Analysis Toolkit for REAPER}\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \u51200 ?\u45716 ? \u44172 ?\u51076 ? \u49324 ?\u50868 ?\u46300 ? \u46356 ?\u51088 ?\u51060 ?\u45320 ? **\u44608 ?\u51456 ?\u44592 ?(Junki Kim)**\u51077 ?\u45768 ?\u45796 ?. \u51060 ? \u49828 ?\u53356 ?\u47549 ?\u53944 ?\u45716 ? REAPER \u51204 ?\u50857 ? \u50724 ?\u46356 ?\u50724 ? \u49884 ?\u44033 ?\u54868 ? \u46020 ?\u44396 ?\u51077 ?\u45768 ?\u45796 ?. \u51200 ?\u45716 ? \u51204 ?\u47928 ? \u54532 ?\u47196 ?\u44536 ?\u47000 ?\u47672 ?\u44032 ? \u50500 ?\u45768 ?\u46972 ?\u49436 ? \u50724 ?\u47448 ?\u50752 ? \u48260 ?\u44536 ?\u51032 ? \u49688 ?\u51221 ?\u50640 ? \u51088 ?\u49888 ?\u51060 ? \u50630 ?\u49845 ?\u45768 ?\u45796 ?\u12636 ?\u12636 ? \u44536 ?\u47000 ?\u46020 ?... \u54841 ?\u49884 ?\u46972 ?\u46020 ? \u44060 ?\u49440 ?\u49324 ?\u54637 ?\u51060 ? \u51080 ?\u45796 ?\u47732 ? \u50616 ?\u51228 ?\u46304 ?\u51648 ? \u51200 ?\u50640 ?\u44172 ? \u47700 ?\u51068 ?\u51012 ? \u48372 ?\u45236 ?\u51452 ?\u49464 ?\u50836 ?!\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 I am Junki Kim, a game sound designer. This script is a dedicated audio visualization tool for REAPER. As I am not a professional programmer, I may not be perfect at fixing every error or bug, but I am always open to feedback! If you have any suggestions or improvements, please feel free to email me.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Contact: junkikim.sound@gmail.com\sa180\par}
 {\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 1. \u49444 ?\u52824 ?\u54616 ?\u44592 ?\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 JKK_Visualizer\u47484 ? \u49324 ?\u50857 ?\u54616 ?\u44592 ? \u50948 ?\u54644 ?\u49436 ?\u45716 ? {\b ReaImGui}\u44032 ? \u48152 ?\u46300 ?\u49884 ? \u49444 ?\u52824 ?\u46104 ?\u50612 ? \u51080 ?\u50612 ?\u50556 ? \u54633 ?\u45768 ?\u45796 ?.\par}
-{\pard \ql \f0 \sa180 \li720 \fi0 ReaImGui\u45716 ? REAPER\u50640 ?\u49436 ? \u54788 ?\u45824 ?\u51201 ?\u51064 ? \u51064 ?\u53552 ?\u54168 ?\u51060 ?\u49828 ?(UI)\u47484 ? \u47564 ?\u46308 ? \u49688 ? \u51080 ?\u44172 ? \u54644 ?\u51452 ?\u45716 ? \u54869 ?\u51109 ? \u46972 ?\u51060 ?\u48652 ?\u47084 ?\u47532 ?\u47196 ?, \u51060 ? \u49828 ?\u53356 ?\u47549 ?\u53944 ?\u45716 ? \u47784 ?\u46304 ? UI\u47484 ? ReaImGui \u44592 ?\u48152 ?\u51004 ?\u47196 ? \u44396 ?\u49457 ?\u54616 ?\u44256 ? \u51080 ?\u44592 ? \u46412 ?\u47928 ?\u50640 ? \u54596 ?\u49688 ? \u44396 ?\u49457 ?\u50836 ?\u49548 ?\u51077 ?\u45768 ?\u45796 ?.\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 1.\tx360\tab {\b {\field{\*\fldinst{HYPERLINK "https://reapack.com/"}}{\fldrslt{\ul
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 \u9881 ?\u65039 ? 1. Installation\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 ReaImGui must be installed to use JKK_Visualizer.\par}
+{\pard \ql \f0 \sa180 \li720 \fi0 ReaImGui is an essential library that allows for modern user interfaces within REAPER. Since this script's UI is entirely built on ReaImGui, it is a required component.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 1.\tx360\tab {\b Install {\field{\*\fldinst{HYPERLINK "https://reapack.com/"}}{\fldrslt{\ul
 ReaPack
 }}}
-\u51032 ? \u49444 ?\u52824 ?} ReaImGui\u45716 ? {\field{\*\fldinst{HYPERLINK "https://reapack.com/"}}{\fldrslt{\ul
+} The easiest and safest way to install ReaImGui is through {\field{\*\fldinst{HYPERLINK "https://reapack.com/"}}{\fldrslt{\ul
 {\b ReaPack}
 }}}
-\u51060 ?\u46972 ?\u45716 ? Extension\u51012 ? \u53685 ?\u54644 ? \u49444 ?\u52824 ?\u54616 ?\u45716 ? \u44163 ?\u51060 ? \u44032 ?\u51109 ? \u44036 ?\u45800 ?\u54616 ?\u44256 ? \u50504 ?\u51204 ?\u54633 ?\u45768 ?\u45796 ?. \u44536 ?\u47084 ?\u48064 ?\u47196 ? \u47676 ?\u51200 ? {\field{\*\fldinst{HYPERLINK "https://reapack.com/"}}{\fldrslt{\ul
-{\b ReaPack}
+. Please refer to {\field{\*\fldinst{HYPERLINK "https://reapack.com/"}}{\fldrslt{\ul
+the ReaPack websit
 }}}
-\u51012 ? \u49444 ?\u52824 ?\u54644 ?\u50556 ? \u54633 ?\u45768 ?\u45796 ?. {\field{\*\fldinst{HYPERLINK "https://reapack.com/"}}{\fldrslt{\ul
-{\b ReaPack}
+ for the installation guide. Once installed, you will see an {\b Extensions \u8594 ? ReaPack} menu in REAPER's top menu bar.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 2.\tx360\tab {\b Install ReaImGui}\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 1.\tx360\tab Navigate to {\b Extensions \u8594 ? ReaPack \u8594 ? Browse Packages}.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 2.\tx360\tab Search for {\f1 ReaImGui}. (If it doesn't appear, follow the guide at {\field{\*\fldinst{HYPERLINK "https://github.com/cfillion/reaimgui"}}{\fldrslt{\ul
+{\b this site}
 }}}
-\u51032 ? \u49444 ?\u52824 ? \u44032 ?\u51060 ?\u46300 ?\u45716 ? {\field{\*\fldinst{HYPERLINK "https://reapack.com/"}}{\fldrslt{\ul
-\u54644 ?\u45817 ? \u49324 ?\u51060 ?\u53944 ?
-}}}
-\u47484 ? \u52280 ?\u44256 ?\u54644 ?\u51452 ?\u49901 ?\u49884 ?\u50724 ?. \u49444 ?\u52824 ?\u44032 ? \u51221 ?\u49345 ?\u51201 ?\u51004 ?\u47196 ? \u50756 ?\u47308 ?\u46104 ?\u50632 ?\u45796 ?\u47732 ?, \u50952 ?\u46020 ?\u50864 ? \u49345 ?\u45800 ? \u47700 ?\u45684 ?\u48148 ?\u50640 ? {\b Extension \u8594 ? ReaPack}\u51060 ?\u46972 ?\u45716 ? \u47700 ?\u45684 ?\u47484 ? \u54869 ?\u51064 ?\u54624 ? \u49688 ? \u51080 ?\u49845 ?\u45768 ?\u45796 ?. \u51221 ?\u49345 ?\u51201 ?\u51004 ?\u47196 ? \u49444 ?\u52824 ?\u46104 ?\u50632 ?\u45796 ?\u47732 ?, \u50948 ?\u51032 ? \u47700 ?\u45684 ?\u47484 ? \u54869 ?\u51064 ?\u54624 ? \u49688 ? \u51080 ?\u49845 ?\u45768 ?\u45796 ?.\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 2.\tx360\tab {\b ReaImGui\u51032 ? \u49444 ?\u52824 ?}\par}
-{\pard \ql \f0 \sa0 \li720 \fi-360 1.\tx360\tab REAPER \u49345 ?\u45800 ? \u47700 ?\u45684 ?\u50640 ?\u49436 ? {\b Extensions \u8594 ? ReaPack \u8594 ? Browse Packages} \u47484 ? \u49440 ?\u53469 ?\u54633 ?\u45768 ?\u45796 ?.\par}
-{\pard \ql \f0 \sa0 \li720 \fi-360 2.\tx360\tab \u44160 ?\u49353 ?\u52285 ?\u50640 ? {\f1 ReaImGui}\u47484 ? \u51077 ?\u47141 ?\u54633 ?\u45768 ?\u45796 ?. (\u47564 ?\u50557 ? \u50668 ?\u44592 ?\u49436 ? \u44160 ?\u49353 ?\u46104 ?\u51648 ? \u50506 ?\u45716 ?\u45796 ?\u47732 ?, {\field{\*\fldinst{HYPERLINK "https://github.com/cfillion/reaimgui"}}{\fldrslt{\ul
-{\b \u51060 ? \u49324 ?\u51060 ?\u53944 ?}
-}}}
-\u50640 ?\u49436 ? \u50504 ?\u45236 ?\u54616 ?\u45716 ? \u44032 ?\u51060 ?\u46300 ?\u47484 ? \u46384 ?\u47476 ?\u49901 ?\u49884 ?\u50724 ?.)\par}
-{\pard \ql \f0 \sa0 \li720 \fi-360 3.\tx360\tab {\b ReaImGui / Extensions(Type)} \u46972 ?\u45716 ? \u54056 ?\u53412 ?\u51648 ?\u47484 ? \u54869 ?\u51064 ?\u54664 ?\u45796 ?\u47732 ?, \u54644 ?\u45817 ? \u54056 ?\u53412 ?\u51648 ?\u47484 ? {\b \u50864 ?\u53364 ?\u47533 ? \u8594 ? Install \u49440 ?\u53469 ?}\u54633 ?\u45768 ?\u45796 ?.\par}
-{\pard \ql \f0 \sa0 \li720 \fi-360 4.\tx360\tab {\b \u50864 ?\u52769 ? \u54616 ?\u45800 ?\u51032 ? Apply \u53364 ?\u47533 ?}\u54633 ?\u45768 ?\u45796 ?.\par}
-{\pard \ql \f0 \sa0 \li720 \fi-360 5.\tx360\tab \u49444 ?\u52824 ?\u44032 ? \u50756 ?\u47308 ?\u46104 ?\u50632 ?\u45796 ?\u47732 ?, REAPER\u47484 ? \u51116 ?\u49884 ?\u51089 ?\u54616 ?\u47732 ? \u46121 ?\u45768 ?\u45796 ?.\sa180\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 3.\tx360\tab {\b ReaImGui\u51060 ? \u51221 ?\u49345 ?\u51201 ?\u51004 ?\u47196 ? \u49444 ?\u52824 ?\u46104 ?\u50632 ?\u45716 ?\u51648 ? \u54869 ?\u51064 ?\u54616 ?\u44592 ?}\par}
-{\pard \ql \f0 \sa0 \li720 \fi-360 1.\tx360\tab REAPER\u51032 ? Action List (\u45800 ?\u52629 ?\u53412 ?: ? ) \u52285 ?\u51012 ? \u50685 ?\u45768 ?\u45796 ?.\par}
-{\pard \ql \f0 \sa0 \li720 \fi-360 2.\tx360\tab \u44160 ?\u49353 ?\u52285 ?\u50640 ? {\f1 ImGui} \u51077 ?\u47141 ?\u54620 ? \u54980 ?, \u50500 ?\u47000 ?\u50752 ? \u44057 ?\u51008 ? \u50529 ?\u49496 ? \u46608 ?\u45716 ? \u49828 ?\u53356 ?\u47549 ?\u53944 ?\u44032 ? \u48372 ?\u51060 ?\u47732 ? \u51221 ?\u49345 ? \u49444 ?\u52824 ?\u46108 ? \u44163 ?\u51077 ?\u45768 ?\u45796 ?.\line {\b ReaImGui: Demo.lua \u46972 ?\u45716 ? \u49828 ?\u53356 ?\u47549 ?\u53944 ?\u47484 ? \u52286 ?\u51004 ?\u49464 ?\u50836 ?!}\sa180\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 4.\tx360\tab {\b Extensions \u8594 ? ReaPack \u8594 ? Manage repositories}\u47196 ? \u44036 ? \u46244 ?, {\b Import/export... \u8594 ? Import repositories} \par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 5.\tx360\tab \u52285 ?\u50640 ? {\f1 https://github.com/junkikim-sound/JKK_Visualizer/raw/master/index.xml}\u47484 ? \u51077 ?\u47141 ?\u54616 ?\u44256 ? OK\u47484 ? \u45572 ?\u47493 ?\u45768 ?\u45796 ?. \par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 6.\tx360\tab Install/update JKK_Visualizer\u47484 ? \u53685 ?\u54644 ? \u51204 ?\u52404 ? \u49444 ?\u52824 ?\u54616 ?\u47732 ? \u50756 ?\u47308 ?! \par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 7.\tx360\tab Actions\u50640 ?\u49436 ? JKK_Visualizer\u50752 ? JKK_Visualizer Editor\u47484 ? \u52286 ?\u50500 ? \u49892 ?\u54665 ?\u54624 ? \u49688 ? \u51080 ?\u49845 ?\u45768 ?\u45796 ?. \sa180\par}
+)\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 3.\tx360\tab Right-click the {\b ReaImGui / Extensions} package and select {\b Install}.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 4.\tx360\tab Click {\b Apply} in the bottom right corner.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 5.\tx360\tab Restart REAPER after the installation is complete.\sa180\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 3.\tx360\tab Verify ReaImGui Installation\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 1.\tx360\tab Open REAPER\u8217's Action List (Shortcut: {\f1 ?}).\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 2.\tx360\tab Search for {\f1 ImGui}. If you see a script named {\b ReaImGui: Demo.lua}, the installation was successful.\sa180\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 4.\tx360\tab Import JKK_Visualizer Repository\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 1.\tx360\tab Go to Extensions \u8594 ? ReaPack \u8594 ? Manage repositories. \par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 2.\tx360\tab Select Import/export... \u8594 ? Import repositories.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 3.\tx360\tab Enter the following URL and click OK: {\f1 **https://github.com/junkikim-sound/JKK_Visualizer/raw/master/index.xml**} \par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 4.\tx360\tab Find {\b JKK_Visualizer} in the package list, right-click to {\b install}, and click {\b Apply}. \par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 5.\tx360\tab You can now find and run JKK_Visualizer and JKK_Visualizer Editor in your Actions. \sa180\sa180\par}
 {\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 2. \u49548 ?\u44060 ?\u54616 ?\u44592 ?\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 \u55357 ?\u56960 ? 2. Introduction\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 {\cf1 [image: https://github.com/user-attachments/assets/908ef485-3651-493e-9ec7-62b69f6dda90]\cf0}\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 Key Features\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Multi-Module Interface: Monitor LUFS, Goniometer, Symbiote, Scope, and Spectrum modules simultaneously on a single screen.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Phase Correlation Meter: Built-in phase meter within the Gonio module for intuitive monitoring of stereo phase alignment.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Dynamic Symbiote: A unique visualizer that evolves based on low-frequency responses, allowing you to "feel" the sound texture.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Customizable Order: Use the ImGui-based Editor to reorder modules and adjust sensitivity or theme colors in real-time.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Global Speed Control: Manage the Attack/Release response speed of all modules via a single master variable.\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 Technical Details\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Language: Lua\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Library: REAPER v7.0+ / Dear ImGui\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Engine: JSFX-to-Lua Data Streaming via gmem\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Optimization: Optimized for low CPU usage even at a smooth 60FPS\sa180\par}
+{\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 \u55356 ?\u57098 ? About the Author\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Junki Kim Game Sound Designer Specializing in game audio implementation and REAPER workflow optimization.\par}
 }
 ]]></description>
   </metadata>
