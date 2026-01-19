@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 0.9.1
+-- @version 0.9.3
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -157,7 +157,12 @@ local ui_order = {1, 2, 3, 4, 5}
     function draw_gonio(x, y, w, h, gain)
         -- Goniometer
             local base_trail = 2000
-            local trail_len = math.floor(base_trail / g_signal_release)
+            local trail_len = math.floor(base_trail / (g_signal_release / 2))
+            local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
+                          gfx.mouse_y >= y and gfx.mouse_y <= y + h)
+            if is_hover then
+                trail_len = trail_len * 5
+            end
 
             local cx, cy = x + w * 0.5, y + h * 0.45
             local dim_limit = math.min(w, h)
@@ -190,7 +195,7 @@ local ui_order = {1, 2, 3, 4, 5}
                     table.insert(gonio_peaks, {px = px, py = py, time = now})
                 end
 
-                -- 일반 점 색상 보간 (피크에 가까울수록 빨라짐)
+                -- 일반 점 색상 보간
                 local t = math.min(1.0, peak_intensity / visual_limit)
                 local gonio_r, gonio_g, gonio_b, gonio_a
 
@@ -450,6 +455,11 @@ local ui_order = {1, 2, 3, 4, 5}
         
         -- step: 1픽셀당 표현해야 할 데이터의 양 (예: 125 샘플)
         local step = (buf_len / w) * scope_speed 
+        local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
+                      gfx.mouse_y >= y and gfx.mouse_y <= y + h)
+        if is_hover then
+            step = (buf_len / w) * (0.3)
+        end
         local scan_stride = math.max(1, math.floor(step / 8)) 
 
         for m = 0, w - 1 do
@@ -685,7 +695,7 @@ local ui_order = {1, 2, 3, 4, 5}
                 local info_text = string.format("%.0f Hz (%s)", hz, note)
                 
                 -- 3. 툴팁 그리기
-                gfx.setfont(1, "Arial", (base_title_size - 4) * g_font_scale) -- 툴팁용 작은 폰트
+                gfx.setfont(1, "Arial", (base_title_size) * g_font_scale) -- 툴팁용 작은 폰트
                 local tw, th = gfx.measurestr(info_text)
                 local tx, ty = gfx.mouse_x + 10, gfx.mouse_y - 20
                 
@@ -856,6 +866,71 @@ local ui_order = {1, 2, 3, 4, 5}
                 end
         end
 
+    -- Function: Initialize_System
+        local SECTION = "JKK_Visualizer" -- [중요] 에디터와 똑같은 이름이어야 함!
+
+        local function Initialize_System()
+            -- (A) ExtState에서 저장된 값 불러오기 시도
+            local function load_color(mem_idx, ext_key)
+                if reaper.HasExtState(SECTION, "MEM_"..mem_idx) then
+                    reaper.gmem_write(mem_idx, tonumber(reaper.GetExtState(SECTION, "MEM_"..mem_idx)))
+                    return true
+                end
+                return false
+            end
+
+            -- 색상 불러오기 (실패하면 nil 반환)
+            local loaded = load_color(1000, "MEM_1000") -- 배경색 R값만 체크해봐도 됨
+
+            -- (B) 저장된 값이 없거나, gmem이 비어있으면(0이면) -> 기본값 강제 주입
+            -- 배경색(1000번지)의 Alpha값(1003)이 0이면 "초기화 안 됨"으로 간주
+            if reaper.gmem_read(1003) == 0 then
+                -- Helper: gmem에 RGBA 쓰기
+                local function write_def(idx, col)
+                    reaper.gmem_write(idx, col[1])
+                    reaper.gmem_write(idx+1, col[2])
+                    reaper.gmem_write(idx+2, col[3])
+                    reaper.gmem_write(idx+3, col[4])
+                end
+                
+                -- 게인, 속도 기본값
+                reaper.gmem_write(2, 0.5) -- Gain
+                reaper.gmem_write(4, 1.0) -- Attack
+                reaper.gmem_write(5, 1.0) -- Release
+                reaper.gmem_write(1300, 1.0) -- Font Scale
+            end
+
+            -- (C) 모듈 순서 및 활성화 상태 불러오기
+            -- 순서 불러오기
+            if reaper.HasExtState(SECTION, "ModuleOrder") then
+                local order_str = reaper.GetExtState(SECTION, "ModuleOrder")
+                local idx = 1
+                for val in string.gmatch(order_str, '([^,]+)') do
+                    reaper.gmem_write(1100 + idx, tonumber(val))
+                    idx = idx + 1
+                end
+            else
+                -- 저장된 순서 없으면 기본 순서 (1,2,3,4,5) 입력
+                for i=1, 5 do reaper.gmem_write(1100 + i, i) end
+            end
+
+            -- 활성화(체크박스) 상태 불러오기
+            if reaper.HasExtState(SECTION, "ModuleActive") then
+                local active_str = reaper.GetExtState(SECTION, "ModuleActive")
+                local idx = 1
+                for val in string.gmatch(active_str, '([^,]+)') do
+                    reaper.gmem_write(1150 + idx, (val == "1" and 1 or 0))
+                    idx = idx + 1
+                end
+            else
+                -- 저장된 값 없으면 전부 켜기(1)
+                for i=1, 5 do reaper.gmem_write(1150 + i, 1) end
+            end
+        end
+
+        -- [핵심] 스크립트 시작 시 딱 한 번 실행!
+        Initialize_System()
+
 ----------------------------------------------------------
 -- UI Loops
 ----------------------------------------------------------
@@ -863,19 +938,55 @@ local ui_order = {1, 2, 3, 4, 5}
         if gfx.getchar() == 27 then return end 
         update_settings_from_gmem()
 
-        if gfx.mouse_cap == 2 then 
-            gfx.x, gfx.y = gfx.mouse_x, gfx.mouse_y
-            local is_docked = gfx.dock(-1) > 0
-            local menu_str = (is_docked and "!" or "") .. "Dock to Docker|"
-            menu_str = menu_str .. "#For editing theme, run 'JKK_Visualizer Editor' from Action List"
-            
-            local selection = gfx.showmenu(menu_str)
-            
-            if selection == 1 then
-                if is_docked then gfx.dock(0) else gfx.dock(513) end
+        -- [Right Click Logic]
+            if gfx.mouse_cap == 2 then 
+                gfx.x, gfx.y = gfx.mouse_x, gfx.mouse_y
+                local is_docked = gfx.dock(-1) > 0
+                local menu_str = (is_docked and "!" or "") .. "Dock to Docker|"
+                menu_str = menu_str .. "#For editing theme, run 'JKK_Visualizer Editor' from Action List"
+                
+                local selection = gfx.showmenu(menu_str)
+                
+                if selection == 1 then
+                    if is_docked then gfx.dock(0) else gfx.dock(513) end
+                end
             end
-        end
+        -- [Mouse Scroll Logic]
+            if gfx.mouse_wheel ~= 0 then
+                -- 1. 현재 Gain 값 읽기
+                local current_gain = reaper.gmem_read(2)
+                
+                -- 2. 휠 방향에 따라 값 변경 (감도 조절: 0.05)
+                -- 휠을 위로 올리면(+) 게인 증가, 내리면(-) 게인 감소
+                local sensitivity = 0.02
+                local change = (gfx.mouse_wheel / 120) * sensitivity 
+                -- (참고: 리퍼/OS에 따라 휠 한 칸이 120일 수도, 1일 수도 있습니다. 
+                -- 너무 빠르면 120을 나누고, 너무 느리면 120을 지우세요.)
+                
+                if math.abs(change) < 0.01 then -- 미세 조정 보정
+                     change = (gfx.mouse_wheel > 0) and 0.02 or -0.02
+                end
 
+                current_gain = current_gain + change
+
+                -- 3. 최대/최소 제한 (Clamping)
+                if current_gain > 1.0 then current_gain = 1.0 end
+                if current_gain < 0.0 then current_gain = 0.0 end
+
+                -- 4. 변경된 값 저장 (gmem & ExtState)
+                reaper.gmem_write(2, current_gain)
+                -- (선택 사항) 영구 저장을 원하면 아래 주석 해제 (하지만 너무 빈번한 저장은 비추천)
+                -- reaper.SetExtState("JKK_Visualizer", "MEM_2", tostring(current_gain), true)
+
+                -- 5. 휠 값 초기화 (필수! 안 하면 계속 돌아감)
+                gfx.mouse_wheel = 0
+                
+                -- [보너스] 화면 중앙에 현재 게인 값 잠시 띄우기 위한 변수 설정
+                -- (이 변수는 run 함수 밖, 전역 변수로 선언해두는 것이 좋습니다: local gain_popup_time = 0)
+                gain_popup_timer = 30 -- 약 0.5초간 표시 (30프레임)
+            end
+
+        -- [Value Calculation]
         local s1 = reaper.gmem_read(2)
         local s2 = reaper.gmem_read(3)
 
@@ -884,33 +995,58 @@ local ui_order = {1, 2, 3, 4, 5}
         local zoom = s_zoom_min + (s_zoom_max - s_zoom_min) * s1
         local floor = spec_floor_min + (spec_floor_max - spec_floor_min) * s2
 
+        -- [Background Draw]
         gfx.set(bg_r, bg_g, bg_b, bg_a)
         gfx.rect(0, 0, gfx.w, gfx.h)
 
-        -- 섹션 경계 좌표
-        local d0 = math.floor(gfx.w * 0.10)     -- LUFS 끝
-        local d1 = math.floor(gfx.w * 0.25)     -- Gonio 끝
-        local d2 = math.floor(gfx.w * 0.40)     -- Symbiote 끝
-        local d3 = math.floor(gfx.w * 0.55)     -- Scope 끝
+        -- [Module Settings]
+        local module_widths = {
+            [1] = 0.10, -- LUFS
+            [2] = 0.15, -- Gonio
+            [3] = 0.15, -- Symbiote
+            [4] = 0.15, -- Scope
+            [5] = 0.45  -- Spectrum
+        }
+
+        -- [Step 1] 활성화된 모듈의 총 비율과 개수 계산
+        -- 모듈이 꺼지면 남은 모듈들이 화면을 꽉 채우기 위해 필요합니다.
+        local total_active_ratio = 0
+        local active_count = 0
         
-        -- UI 그리기
-            local module_widths = {
-                [1] = 0.10, -- LUFS
-                [2] = 0.15, -- Gonio
-                [3] = 0.15, -- Symbiote
-                [4] = 0.15, -- Scope
-                [5] = 0.45  -- Spectrum
-            }
+        for i = 1, 5 do
+            local mod_id = ui_order[i]
+            -- 1150 + id 값을 읽어 활성 상태 확인 (1=On, 0=Off)
+            -- 에디터가 아직 값을 안 썼을 경우를 대비해 기본값 1 처리
+            local val = reaper.gmem_read(1150 + mod_id)
+            -- 초기에 값이 0일 수도 있으므로, 저장된 적이 없으면 1로 간주하는 안전장치 필요 시 추가 가능
+            -- 여기서는 에디터에서 기본적으로 1을 쓴다고 가정
+            
+            if val == 1 then
+                total_active_ratio = total_active_ratio + module_widths[mod_id]
+                active_count = active_count + 1
+            end
+        end
 
-            -- [그리기 루프]
-            local current_x = 0
+        -- 만약 모든 모듈이 꺼져있다면 0으로 나누는 오류 방지
+        if total_active_ratio == 0 then total_active_ratio = 1 end
 
-            for i = 1, 5 do
-                local mod_id = ui_order[i]
-                local ratio = module_widths[mod_id]
+        -- [Step 2] 그리기 루프
+        local current_x = 0
+        local drawn_count = 0 -- 실제로 그려진 모듈 수 카운트
+
+        for i = 1, 5 do
+            local mod_id = ui_order[i]
+            local is_active = (reaper.gmem_read(1150 + mod_id) == 1)
+
+            if is_active then
+                drawn_count = drawn_count + 1
+                
+                -- 비율 재계산 (꺼진 모듈만큼 너비 확장)
+                local ratio = module_widths[mod_id] / total_active_ratio
                 local w = math.floor(gfx.w * ratio)
                 
-                if i == 5 then 
+                -- 마지막으로 그려지는 모듈은 남은 공간을 모두 채움 (빈틈 방지)
+                if drawn_count == active_count then 
                     w = gfx.w - current_x 
                 end
 
@@ -923,21 +1059,21 @@ local ui_order = {1, 2, 3, 4, 5}
                 end
                 
                 -- 2. 왼쪽 경계선 그리기
-                if i == 1 then
-                    -- [수정] 첫 번째 모듈의 왼쪽 선은 배경색(bg_r, bg_g, bg_b)과 동일하게 설정
+                -- 화면의 가장 왼쪽에 있는 모듈(첫 번째로 그려지는 녀석)은 경계선을 배경색으로 숨김
+                if drawn_count == 1 then
                     gfx.set(bg_r, bg_g, bg_b, bg_a)
                 else
-                    -- 그 외의 모듈은 원래 설정된 라인 색상 사용
                     gfx.set(line_r, line_g, line_b, line_a)
                 end
+                
                 gfx.line(current_x, 0, current_x, gfx.h)
                 current_x = current_x + w
             end
+        end
         
         gfx.update()
         reaper.defer(run)
     end
-
 
 run()
 
