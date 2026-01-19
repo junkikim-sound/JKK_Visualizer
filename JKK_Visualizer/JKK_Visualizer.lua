@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 0.9.0
+-- @version 0.9.1
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -525,6 +525,17 @@ local ui_order = {1, 2, 3, 4, 5}
         gfx.drawstr("Scope")
     end
 
+    local function freq_to_note(freq)
+        if freq <= 0 then return "N/A" end
+        -- MIDI Number 계산: 69 + 12 * log2(freq / 440)
+        local n = 12 * (math.log(freq / 440, 2)) + 69
+        local midi_int = math.floor(n + 0.5)
+        local names = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"}
+        local note_idx = (midi_int % 12) + 1
+        local octave = math.floor(midi_int / 12) - 1
+        return names[note_idx] .. octave
+    end
+
     function draw_spectrum(x, y, w, h, ceil, floor)
         -------------------------
         local base_area_decay = 4.0 -- 값이 작을수록 더 천천히 떨어짐 (부드러움)
@@ -532,6 +543,11 @@ local ui_order = {1, 2, 3, 4, 5}
         local area_decay_rate = base_area_decay * g_signal_release
         local peak_decay_rate = base_peak_decay * g_signal_release
         -------------------------초기
+        local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
+                      gfx.mouse_y >= y and gfx.mouse_y <= y + h)
+        if is_hover then
+            area_decay_rate = 1.0 * g_signal_release
+        end
 
         local range = ceil - floor
         local srate = reaper.gmem_read(1)
@@ -656,6 +672,48 @@ local ui_order = {1, 2, 3, 4, 5}
             end
         end
         
+        -- [draw_spectrum 함수 내부 마지막 부분에 추가]
+            if gfx.mouse_x >= x and gfx.mouse_x <= x + w and gfx.mouse_y >= y and gfx.mouse_y <= y + h then
+                -- 1. 마우스 X좌표를 주파수로 역산 (로그 스케일 기준)
+                local x_norm = (gfx.mouse_x - x) / w
+                local k_max_log = math.log(fft_bins)
+                local k_val = math.exp(x_norm * k_max_log)
+                local hz = k_val * srate / fft_size
+                
+                -- 2. 정보 텍스트 생성 (dB 제외)
+                local note = freq_to_note(hz)
+                local info_text = string.format("%.0f Hz (%s)", hz, note)
+                
+                -- 3. 툴팁 그리기
+                gfx.setfont(1, "Arial", (base_title_size - 4) * g_font_scale) -- 툴팁용 작은 폰트
+                local tw, th = gfx.measurestr(info_text)
+                local tx, ty = gfx.mouse_x + 10, gfx.mouse_y - 20
+                
+                -- 화면 밖으로 나가지 않게 조정
+                if tx + tw > gfx.w then tx = gfx.mouse_x - tw - 10 end
+                if ty < 0 then ty = gfx.mouse_y + 20 end
+                
+                -- 배경 사각형 (테마 색상 활용)
+                gfx.set(bg_r, bg_g, bg_b, 0.9) 
+                gfx.rect(tx - 4, ty - 2, tw + 8, th + 4, 1)
+                
+                -- 테두리 선 추가 (가독성 향상)
+                gfx.set(line_r, line_g, line_b, 0.5)
+                gfx.rect(tx - 4, ty - 2, tw + 8, th + 4, 0)
+
+                -- 텍스트 출력
+                gfx.set(1, 1, 1, 1) 
+                gfx.x, gfx.y = tx, ty
+                gfx.drawstr(info_text)
+                
+                -- 4. 마우스 위치 가이드 세로선
+                gfx.set(line_r, line_g, line_b, 0.3)
+                gfx.line(gfx.mouse_x, y, gfx.mouse_x, y + h)
+                
+                -- 폰트 원복 (중요)
+                gfx.setfont(1, "Arial", base_title_size * g_font_scale)
+            end
+
         gfx.set(line_r, line_g, line_b, line_a)
         gfx.x, gfx.y = x + 5, y + 5
         gfx.drawstr("Spectrum")
