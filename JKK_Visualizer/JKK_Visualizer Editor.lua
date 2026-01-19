@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer Editor
 -- @description JKK_Visualizer Editor
 -- @author Junki Kim
--- @version 0.9.0
+-- @version 0.9.3
 -- @provides
 --     [nomain] JKK_Theme.lua
 --     [nomain] LOGO.png
@@ -28,7 +28,8 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
     local MEM_MID   = 1040
     local MEM_PEAK  = 1050
     local MEM_FREZ  = 1060
-    local ui_order = {1, 2, 3, 4, 5} 
+    local ui_order  = {1, 2, 3, 4, 5} 
+    local ui_active = {true, true, true, true, true}
 
 ----------------------------------------------------------
 -- UI Info Description
@@ -59,7 +60,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
     -- [모든 설정을 ExtState에 저장]
     local function SaveAllSettings()
         -- 1. 색상 저장 (메모리 주소 1101~1125 등 모든 색상 루프)
-        for i = 1000, 1140 do -- 충분한 범위를 저장
+        for i = 1000, 1140 do
             local val = reaper.gmem_read(i)
             reaper.SetExtState(SECTION, "MEM_"..i, tostring(val), true)
         end
@@ -69,6 +70,10 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         local order_str = ""
         for i = 1, 5 do order_str = order_str .. ui_order[i] .. (i < 5 and "," or "") end
         reaper.SetExtState(SECTION, "ModuleOrder", order_str, true)
+        -- 4. 모듈 활성화 상태 저장
+        local active_str = ""
+        for i = 1, 5 do active_str = active_str .. (ui_active[i] and "1" or "0") .. (i < 5 and "," or "") end
+        reaper.SetExtState(SECTION, "ModuleActive", active_str, true)
     end
 
     -- [저장된 설정 불러오기]
@@ -92,6 +97,20 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                 reaper.gmem_write(1100 + idx, ui_order[idx])
                 idx = idx + 1
             end
+        end
+        -- 4. [추가] 모듈 활성화 상태 불러오기
+        if reaper.HasExtState(SECTION, "ModuleActive") then
+            local active_str = reaper.GetExtState(SECTION, "ModuleActive")
+            local idx = 1
+            for val in string.gmatch(active_str, '([^,]+)') do
+                ui_active[idx] = (val == "1")
+                -- gmem 1151~1155에 상태 쓰기 (1=On, 0=Off)
+                reaper.gmem_write(1150 + idx, ui_active[idx] and 1 or 0)
+                idx = idx + 1
+            end
+        else
+            -- 저장된 값이 없으면 기본값(전부 켜짐)으로 gmem 초기화
+            for i = 1, 5 do reaper.gmem_write(1150 + i, 1) end
         end
     end
     LoadAllSettings()
@@ -206,7 +225,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         local textcol_gray = 0x808080FF
         local pushed_vars, pushed_cols = ApplyTheme(ctx)
         reaper.ImGui_PushFont(ctx, sans_font, 12)
-        reaper.ImGui_SetNextWindowSize(ctx, 530, 510, reaper.ImGui_Cond_Once())
+        reaper.ImGui_SetNextWindowSize(ctx, 530, 540, reaper.ImGui_Cond_Once())
 
         local visible, open = reaper.ImGui_Begin(ctx, 'JKK_Visualizer Theme Editor v0.5', true,
             reaper.ImGui_WindowFlags_NoCollapse())
@@ -285,8 +304,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
             -- Visual Size ========================================================
                 reaper.ImGui_SeparatorText(ctx, 'Visual Size')
                 local current_gain = reaper.gmem_read(MEM_GAIN)
-                    reaper.ImGui_SetNextItemWidth(ctx, -1)
-                    local changed, new_gain = reaper.ImGui_SliderDouble(ctx, "##Gain", current_gain, 0.0, 1.0, "Signal Gain: %.3f")
+                    local changed, new_gain = reaper.ImGui_SliderDouble(ctx, "Signal Gain", current_gain, 0.0, 1.0, "%.3f")
                     if reaper.ImGui_IsItemClicked(ctx, 1) then 
                         new_gain = 0.5 
                         changed = true
@@ -300,8 +318,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                     end
                 local font_scale = reaper.gmem_read(1300)
                     if font_scale <= 0 then font_scale = 1.0 end
-                    reaper.ImGui_SetNextItemWidth(ctx, -1)
-                    local changed, new_scale = reaper.ImGui_SliderDouble(ctx, "##Font Scale", font_scale, 0.5, 2.0, "Font Size: %.2fx")
+                    local changed, new_scale = reaper.ImGui_SliderDouble(ctx, "Font Scale", font_scale, 0.5, 2.0, "%.2fx")
                     if changed then
                         reaper.gmem_write(1300, new_scale)
                         SaveAllSettings()
@@ -315,8 +332,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                     local current_att = reaper.gmem_read(4)
                     if current_att <= 0 then current_att = 1.0 end
 
-                    reaper.ImGui_SetNextItemWidth(ctx, -1)
-                    local changed_att, new_att = reaper.ImGui_SliderDouble(ctx, "##Attack", current_att, 0.1, 3.0, "Response Speed: %.2fx")
+                    local changed_att, new_att = reaper.ImGui_SliderDouble(ctx, "Response Speed", current_att, 0.1, 1.0, "%.2fx")
 
                     -- [수정] changed -> changed_att 로 변경
                     if reaper.ImGui_IsItemClicked(ctx, 1) then 
@@ -334,8 +350,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                     local current_rel = reaper.gmem_read(5)
                     if current_rel <= 0 then current_rel = 1.0 end
 
-                    reaper.ImGui_SetNextItemWidth(ctx, -1)
-                    local changed_rel, new_rel = reaper.ImGui_SliderDouble(ctx, "##Release", current_rel, 0.1, 3.0, "Decay Speed: %.2fx")
+                    local changed_rel, new_rel = reaper.ImGui_SliderDouble(ctx, "Decay Speed", current_rel, 0.1, 1.0, "%.2fx")
 
                     -- [수정] changed -> changed_rel 로 변경
                     if reaper.ImGui_IsItemClicked(ctx, 1) then 
@@ -355,36 +370,53 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
 
                 reaper.ImGui_SeparatorText(ctx, "Module Order (Drag to Reorder)")
 
-                -- [드래그 앤 드롭 리스트]
+                -- [드래그 앤 드롭 리스트 & 체크박스]
                 for i, module_id in ipairs(ui_order) do
+                    -- 1. [추가] 체크박스 그리기
+                    -- ui_active는 모듈 ID를 키로 사용합니다. (예: ui_active[1]은 LUFS의 상태)
+                    local is_active = ui_active[module_id]
+                    local rv, new_val = reaper.ImGui_Checkbox(ctx, "##act_"..i, is_active)
+                    if rv then
+                        ui_active[module_id] = new_val
+                        -- 변경 즉시 gmem 전송 및 저장
+                        reaper.gmem_write(1150 + module_id, new_val and 1 or 0)
+                        SaveAllSettings()
+                    end
+                    
+                    -- 체크박스 옆에 텍스트가 오도록 줄바꿈 방지
+                    reaper.ImGui_SameLine(ctx)
+
+                    -- 2. 아이템 표시 (Selectable)
                     if reaper.ImGui_IsItemHovered(ctx) then
                         shared_info.hovered_id = "ORDER"
                     end
-                    -- 1. 아이템 표시 (Selectable 사용)
+                    
                     reaper.ImGui_PushID(ctx, i)
+                    -- 체크박스가 꺼져있으면 텍스트를 흐리게 표시 (선택사항)
+                    if not ui_active[module_id] then reaper.ImGui_BeginDisabled(ctx) end
                     reaper.ImGui_Selectable(ctx, module_names[module_id], false)
+                    if not ui_active[module_id] then reaper.ImGui_EndDisabled(ctx) end
                     reaper.ImGui_PopID(ctx)
 
-                    -- 2. 드래그 시작 (Drag Source)
+                    -- 3. 드래그 시작 (Drag Source)
                     if reaper.ImGui_BeginDragDropSource(ctx, reaper.ImGui_DragDropFlags_None()) then
-                        -- 드래그 중인 아이템의 '현재 인덱스(i)'를 전달
                         reaper.ImGui_SetDragDropPayload(ctx, "DND_ORDER", tostring(i))
-                        reaper.ImGui_Text(ctx, module_names[module_id]) -- 드래그 따라다니는 텍스트
+                        reaper.ImGui_Text(ctx, module_names[module_id])
                         reaper.ImGui_EndDragDropSource(ctx)
                     end
 
-                    -- 3. 드래그 놓기 (Drop Target)
+                    -- 4. 드래그 놓기 (Drop Target)
                     if reaper.ImGui_BeginDragDropTarget(ctx) then
                         local retval, payload = reaper.ImGui_AcceptDragDropPayload(ctx, "DND_ORDER")
                         if retval then
                             local source_idx = tonumber(payload)
                             local target_idx = i
                             
-                            -- Swap 대신 Insert 방식 사용
                             local item_to_move = table.remove(ui_order, source_idx)
                             table.insert(ui_order, target_idx, item_to_move)
                             
                             for k=1, 5 do reaper.gmem_write(1100 + k, ui_order[k]) end
+                            SaveAllSettings() -- 순서 변경 시 즉시 저장
                         end
                         reaper.ImGui_EndDragDropTarget(ctx)
                     end
