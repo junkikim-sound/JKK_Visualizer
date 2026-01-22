@@ -24,8 +24,10 @@ ReaImGui must be installed to use JKK_Visualizer.
     1. Open REAPER’s Action List (Shortcut: `?`).
     2. Search for `ImGui`. If you see a script named **ReaImGui: Demo.lua**, the installation was successful.
 4. Import JKK_Visualizer Repository
-    1. Go to Extensions → ReaPack → Manage repositories.
-        <img width="383" height="140" alt="Screenshot 2025-12-30 at 23 00 01" src="https://github.com/user-attachments/assets/3a56e62d-a18f-4477-aaa5-163f6f32048d" />
+
+      <img width="383" height="140" alt="Screenshot 2025-12-30 at 23 00 01" src="https://github.com/user-attachments/assets/3a56e62d-a18f-4477-aaa5-163f6f32048d" />
+      
+    1. Go to Extensions → ReaPack → Manage repositories.       
     2. Select Import/export... → Import repositories.
     3. Enter the following URL and click OK: 
        > `https://github.com/junkikim-sound/JKK_Visualizer/raw/master/index.xml`
@@ -34,17 +36,19 @@ ReaImGui must be installed to use JKK_Visualizer.
         <img width="776" height="477" alt="Screenshot 2026-01-17 at 16 06 09" src="https://github.com/user-attachments/assets/b7bc3ceb-e893-4ff8-9f7f-6792095f4317" />
     5. You can now find and run JKK_Visualizer and JKK_Visualizer Editor in your Actions.
         <img width="1269" height="404" alt="Screenshot 2026-01-17 at 16 07 33" src="https://github.com/user-attachments/assets/8d69cccf-43d7-42f7-b6c0-612dcff37e49" />
+    6. Add on Master track `JKK_Visualizer`(jsfx file, you can find this in FX window). and Run the Action `JKK_Visualizer`
+       <img width="653" height="213" alt="Screenshot 2026-01-22 at 23 43 43" src="https://github.com/user-attachments/assets/9bafe89e-0073-4d46-ade6-843de687d105" />
+
 
 
 ---
 ## 🚀 2. Introduction
 ![Screen Recording 2026-01-17 at 16 08 18_3](https://github.com/user-attachments/assets/908ef485-3651-493e-9ec7-62b69f6dda90)
 ### Key Features
-- Multi-Module Interface: Monitor LUFS, Goniometer, Symbiote, Scope, and Spectrum modules simultaneously on a single screen.
-- Phase Correlation Meter: Built-in phase meter within the Gonio module for intuitive monitoring of stereo phase alignment.
-- Dynamic Symbiote: A unique visualizer that evolves based on low-frequency responses, allowing you to "feel" the sound texture.
-- Customizable Order: Use the ImGui-based Editor to reorder modules and adjust sensitivity or theme colors in real-time.
-- Global Speed Control: Manage the Attack/Release response speed of all modules via a single master variable.
+- **Multi-Module Interface**: Monitor LUFS, Goniometer, Symbiote, Scope, and Spectrum modules simultaneously on a single screen.
+- **Dynamic Symbiote**: A unique visualizer that evolves based on low-frequency responses, allowing you to "feel" the sound texture.
+- **Customizable Order**: Use the ImGui-based Editor to reorder modules and adjust sensitivity or theme colors in real-time.
+- **Global Speed Control**: Manage the Attack/Release response speed of all modules via a single master variable. You can adjust response speed by mouse wheel.
 
 ### Technical Details
 - Language: Lua 
