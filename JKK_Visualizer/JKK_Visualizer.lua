@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 0.9.3
+-- @version 0.9.4
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -14,8 +14,8 @@ gfx.init("JKK_Visualizer", win_w, win_h, 513)
 -- 사용자 설정 범위
 local g_gain_min, g_gain_max            = 0.0,  2.0
 local s_zoom_min, s_zoom_max            = 0.0,  2.5
-local spec_ceil_min, spec_ceil_max      = 100,  50
-local spec_floor_min, spec_floor_max    = -144, -20
+local spec_ceil_min, spec_ceil_max      = 100,  20
+local spec_floor_min, spec_floor_max    = -45, -45
 local spec_offset = 0
 local g_signal_attack = 0.00001
 local g_signal_release = 0.00001
@@ -606,14 +606,15 @@ local ui_order = {1, 2, 3, 4, 5}
 
             -- --- 좌표 계산 ---
             -- 1) Real-time Fill (면)
-            local t = math.max(0, math.min(1, (smooth_db - floor) / range))
-            local t_curve = t ^ steepness
-            local sptr_r, sptr_g, sptr_b, sptr_a
+            local t_raw = (smooth_db - floor) / range
+            t_raw = math.max(0, math.min(1, t_raw))
+            local t = t_raw ^ 1.5 
+            
             local dy = y + h - (t * h)
             
-            -- 2) Peak Line (선)
-            local pt = (peak_db - floor) / range
-            pt = math.max(0, math.min(1, pt))
+            -- 피크 라인도 동일하게 적용
+            local pt_raw = (peak_db - floor) / range
+            local pt = math.max(0, math.min(1, pt_raw)) ^ 1.5
             local pdy = y + h - (pt * h)
 
             -- X 좌표 (공통)
@@ -670,7 +671,7 @@ local ui_order = {1, 2, 3, 4, 5}
         local freqs = {100, 1000, 10000}
         local labels = {"100", "1k", "10k"}
         for i, freq in ipairs(freqs) do
-            local k = freq * fft_size / srate
+            local k = freq * (fft_bins * 4) / srate
             if k > 0 then
                 local x_norm = math.log(k) / k_max_log
                 if x_norm > 0 and x_norm < 1 then
@@ -688,7 +689,7 @@ local ui_order = {1, 2, 3, 4, 5}
                 local x_norm = (gfx.mouse_x - x) / w
                 local k_max_log = math.log(fft_bins)
                 local k_val = math.exp(x_norm * k_max_log)
-                local hz = k_val * srate / fft_size
+                local hz = k_val * srate / (fft_bins * 4)
                 
                 -- 2. 정보 텍스트 생성 (dB 제외)
                 local note = freq_to_note(hz)
