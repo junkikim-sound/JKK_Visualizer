@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer Editor
 -- @description JKK_Visualizer Editor
 -- @author Junki Kim
--- @version 0.9.3
+-- @version 1.0.0
 -- @provides
 --     [nomain] JKK_Theme.lua
 --     [nomain] LOGO.png
@@ -227,7 +227,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         reaper.ImGui_PushFont(ctx, sans_font, 12)
         reaper.ImGui_SetNextWindowSize(ctx, 530, 540, reaper.ImGui_Cond_Once())
 
-        local visible, open = reaper.ImGui_Begin(ctx, 'JKK_Visualizer Theme Editor v0.5', true,
+        local visible, open = reaper.ImGui_Begin(ctx, 'JKK_Visualizer Editor v1.0', true,
             reaper.ImGui_WindowFlags_NoCollapse())
         reaper.ImGui_PopFont(ctx)
         if reaper.ImGui_IsKeyPressed(ctx, reaper.ImGui_Key_Escape()) then
