@@ -1,7 +1,7 @@
 # JKK_Visualizer
 **A Professional Audio Analysis Toolkit for REAPER**
 
-저는 게임 사운드 디자이너 **김준기(Junki Kim)**입니다. 이 스크립트는 REAPER 전용 오디오 시각화 도구입니다. 
+저는 게임 사운드 디자이너 김준기(Junki Kim)입니다. 이 스크립트는 REAPER 전용 오디오 시각화 도구입니다. 
 저는 전문 프로그래머가 아니라서 오류와 버그의 수정에 자신이 없습니다ㅜㅜ 그래도... 혹시라도 개선사항이 있다면 언제든지 저에게 메일을 보내주세요!
 
 I am **Junki Kim**, a game sound designer. This script is a dedicated audio visualization tool for REAPER. As I am not a professional programmer, I may not be perfect at fixing every error or bug, but I am always open to feedback! If you have any suggestions or improvements, please feel free to email me.
