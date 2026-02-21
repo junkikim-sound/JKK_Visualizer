@@ -1,5 +1,5 @@
 noindex: true
-version: 0.9
+version: 1.0
 author Junki Kim
 desc: JKK_Visualizer
 
@@ -138,9 +138,10 @@ slider1:0.5<0,1,0.001>Visual Gain
     gmem[0] = idx;
 
     // FFT 처리
-    fft_buf[fft_idx] = in_mono * window[fft_idx];
-    fft_buf[fft_size + fft_idx] = 0;
+    fft_buf[fft_idx * 2] = in_mono * window[fft_idx]; // 짝수 인덱스: 실수부 (오디오 데이터)
+    fft_buf[fft_idx * 2 + 1] = 0;                     // 홀수 인덱스: 허수부 (0으로 채움)
     fft_idx += 1;
+    
     fft_idx >= fft_size ? (
         fft_idx = 0;
         memcpy(700000, fft_buf, fft_size * 2);

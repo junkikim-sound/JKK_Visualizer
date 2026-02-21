@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 1.0.1
+-- @version 1.0.2
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -567,7 +567,8 @@ local ui_order = {1, 2, 3, 4, 5}
         -------------------------초기
         local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
                       gfx.mouse_y >= y and gfx.mouse_y <= y + h)
-        if is_hover then
+        local is_frozen = is_hover and (gfx.mouse_cap & 1 == 1)
+        if is_hover and not is_frozen then
             area_decay_rate = 1.0 * g_signal_release
         end
 
@@ -575,6 +576,9 @@ local ui_order = {1, 2, 3, 4, 5}
         local srate = reaper.gmem_read(1)
         if srate == 0 then srate = 48000 end
         local now = reaper.time_precise()
+        local target_max_hz = 48000 -- 무조건 화면 우측 끝에 표시할 최대 주파수
+        local max_k = target_max_hz * fft_size / srate -- 48kHz가 위치한 Bin 인덱스 계산
+        local k_max_log = math.log(max_k) -- X 좌표 정규화에 사용될 로그 스케일 최대치
         
         -- 1. Grid
         gfx.set(line_r, line_g, line_b, line_a)
@@ -585,33 +589,54 @@ local ui_order = {1, 2, 3, 4, 5}
         local pox, poy = x, y + h     -- Peak Line용 이전 좌표
         local k = 1
         
-        while k < fft_bins do
+        while k <= max_k do
             local k_int = math.floor(k)
             local mag = reaper.gmem_read(300000 + k_int)
-            local db = 20 * math.log(mag + 0.0000001, 10) - spec_offset
-            local raw_db = 20 * math.log(mag + 0.0000001, 10) - spec_offset
+            
+            -- 1. 순수한 오디오 dB 값 계산 (Visual Gain 적용 전)
+            local pure_db = 20 * math.log(mag + 0.0000001, 10)
+            
+            -- 2. Visual Gain(spec_offset) 적용
+            local raw_db = pure_db - spec_offset
+            
+            -- 3. [노이즈 플로어 앵커 로직]
+            -- 만약 순수 오디오가 -120dB 이하라면 (사실상 무음이라면)
+            if pure_db < -120 then 
+                -- Gain 값을 무시하고 화면 바닥(floor)보다 10dB 아래로 고정
+                raw_db = floor - 10 
+            end
+
+            -- db 변수는 raw_db와 동일하게 사용
+            local db = raw_db
 
             -- [Area Smoothing Logic] 면 프리즈 효과
-            local smooth_db = spec_smooth_vals[k_int] or -144
-            if raw_db >= smooth_db then
-                local attack_coef = math.min(1.0, 0.8 * g_signal_attack) 
-                smooth_db = smooth_db + (raw_db - smooth_db) * attack_coef
-            else
-                smooth_db = smooth_db - area_decay_rate
+            local smooth_db = spec_smooth_vals[k_int] or (floor - 10)
+            
+            -- 💡 프리즈 상태가 아닐 때만 값 업데이트
+            if not is_frozen then 
+                if raw_db >= smooth_db then
+                    local attack_coef = math.min(1.0, 0.8 * g_signal_attack) 
+                    smooth_db = smooth_db + (raw_db - smooth_db) * attack_coef
+                else
+                    smooth_db = smooth_db - area_decay_rate
+                end
+                spec_smooth_vals[k_int] = smooth_db -- 업데이트된 값을 저장
             end
-            spec_smooth_vals[k_int] = smooth_db
+            -- 프리즈 상태라면 위 로직을 무시하므로 smooth_db는 멈춰있게 됨
 
             -- [Peak Hold Logic]
             local current_peak = spec_peaks[k_int] or -144
             local last_time = spec_peak_times[k_int] or 0
             
-            if db >= current_peak then
-                spec_peaks[k_int] = db
-                spec_peak_times[k_int] = now
-            else
-                if (now - last_time) > peak_hold_time then
-                    spec_peaks[k_int] = current_peak - peak_decay_rate
+            -- 💡 프리즈 상태가 아닐 때만 값 업데이트
+            if not is_frozen then 
+                if db >= current_peak then
+                    spec_peaks[k_int] = db
+                    spec_peak_times[k_int] = now
                 else
+                    if (now - last_time) > peak_hold_time then
+                        spec_peaks[k_int] = current_peak - peak_decay_rate
+                    end
                 end
             end
             local peak_db = spec_peaks[k_int]
@@ -660,9 +685,6 @@ local ui_order = {1, 2, 3, 4, 5}
             end
             
             -- B. Peak Hold Line
-            -- 피크 라인은 항상 맨 위에 그려지도록 루프 마지막에 그리거나, 
-            -- 여기서는 순서대로 그리되 색상을 밝게 하여 눈에 띄게 함.
-            -- (gfx.line은 triangle 위에 그려짐)
             gfx.set(peak_r, peak_g, peak_b, peak_a)
             if k > 1 then
                 gfx.line(pox, poy, dx, pdy)
@@ -683,7 +705,7 @@ local ui_order = {1, 2, 3, 4, 5}
         local freqs = {100, 1000, 10000}
         local labels = {"100", "1k", "10k"}
         for i, freq in ipairs(freqs) do
-            local k = freq * (fft_bins * 4) / srate
+            local k = freq * (fft_size) / srate
             if k > 0 then
                 local x_norm = math.log(k) / k_max_log
                 if x_norm > 0 and x_norm < 1 then
@@ -695,13 +717,13 @@ local ui_order = {1, 2, 3, 4, 5}
             end
         end
         
-        -- [draw_spectrum 함수 내부 마지막 부분에 추가]
+        -- [draw_spectrum 함수]
             if gfx.mouse_x >= x and gfx.mouse_x <= x + w and gfx.mouse_y >= y and gfx.mouse_y <= y + h then
                 -- 1. 마우스 X좌표를 주파수로 역산 (로그 스케일 기준)
                 local x_norm = (gfx.mouse_x - x) / w
                 local k_max_log = math.log(fft_bins)
                 local k_val = math.exp(x_norm * k_max_log)
-                local hz = k_val * srate / (fft_bins * 4)
+                local hz = k_val * srate / fft_size
                 
                 -- 2. 정보 텍스트 생성 (dB 제외)
                 local note = freq_to_note(hz)
@@ -740,6 +762,13 @@ local ui_order = {1, 2, 3, 4, 5}
         gfx.set(line_r, line_g, line_b, line_a)
         gfx.x, gfx.y = x + 5, y + 5
         gfx.drawstr("Spectrum")
+
+        if is_frozen then
+            gfx.set(227/255, 219/255, 142/255, 1.0)
+            local fw, fh = gfx.measurestr("FREEZE")
+            gfx.x, gfx.y = x + w - fw - 5, y + 5
+            gfx.drawstr("FREEZE")
+        end
     end
 
 ----------------------------------------------------------
