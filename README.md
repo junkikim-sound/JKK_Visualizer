@@ -57,5 +57,11 @@ ReaImGui must be installed to use JKK_Visualizer.
 - Optimization: Optimized for low CPU usage even at a smooth 60FPS
 
 ---
+## 📑 3. Update Log
+### v1.0.2 (Feb 22, 2026)
+- Added **Mouse Click-to-Freeze** on Spectrum.
+- Fixed sample rate indexing bug (Now shows full Nyquist range instead of 12kHz cap).
+
+---
 ## 🌊 About the Author
 Junki Kim Game Sound Designer Specializing in game audio implementation and REAPER workflow optimization.
