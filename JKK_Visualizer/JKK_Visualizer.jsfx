@@ -1,5 +1,5 @@
 noindex: true
-version: 0.8
+version: 0.9
 author Junki Kim
 desc: JKK_Visualizer
 
@@ -90,10 +90,30 @@ slider1:0.5<0,1,0.001>Visual Gain
     
     // [리셋 체크] Lua에서 30번지에 1을 쓰면 리셋
     gmem[30] > 0 ? (
+        // 1. 기존 Integrated 관련 변수 리셋
         lufs_i_sum = 0;
         lufs_i_cnt = 0;
         lufs_i_db = -144;
-        gmem[30] = 0; // 리셋 완료 확인
+        
+        // 2. 화면에 표시되는 Momentary, Short-term, Peak 시각값 리셋
+        last_m_visual = -144; 
+        last_s_visual = -144;
+        m_peak_hold = -144;
+        
+        // 3. 내부 누적 계산값 리셋
+        lufs_m_sum = 0; 
+        lufs_s_sum = 0;
+        lval = 0;
+        
+        // 4. 슬라이딩 윈도우 인덱스 및 버퍼 배열 완전 초기화 (매우 중요)
+        win_pos = 0;
+        cur_buf = 0;
+        cur_buf2 = 0;
+        memset(lufs_buf, 0, m_win_cnt);  // Momentary 버퍼를 0으로 채움
+        memset(lufs_buf2, 0, s_win_cnt); // Short-term 버퍼를 0으로 채움
+        
+        // 5. 리셋 완료 후 신호 차단
+        gmem[30] = 0; 
     );
 
     // 샘플레이트 변경 시 필터 재계산

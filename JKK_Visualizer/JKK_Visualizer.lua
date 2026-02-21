@@ -2,14 +2,15 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 1.0.0
+-- @version 1.0.1
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
 options = reaper.gmem_attach('JKK_Visualizer_Mem') 
 
 local win_w, win_h = 800, 150
-gfx.init("JKK_Visualizer", win_w, win_h, 513)
+local saved_dock = tonumber(reaper.GetExtState("JKK_Visualizer", "DockState")) or 0
+gfx.init("JKK_Visualizer", win_w, win_h, saved_dock)
 
 -- 사용자 설정 범위
 local g_gain_min, g_gain_max            = 0.0,  2.0
@@ -25,7 +26,6 @@ local buf_len = 100000
 local fft_size = 4096
 local fft_bins = 2048
 local ui_order = {1, 2, 3, 4, 5}
-
 
 ----------------------------------------------------------
 -- UI Values Setting
@@ -150,8 +150,20 @@ local ui_order = {1, 2, 3, 4, 5}
         local ssw, ssh = gfx.measurestr(s_str)
         gfx.x, gfx.y = cx - ssw * 0.5, s_py + unit_h * 0.45
         gfx.drawstr(s_str)
+    
+        gfx.setfont(1, "Arial", base_title_size * g_font_scale)
 
-        gfx.setfont(1, "Arial", base_title_size * g_font_scale) -- 다음 루프를 위해 폰트 초기화
+        -- 마우스 왼쪽 버튼(1)이 눌렸고, 마우스가 LUFS 모듈 영역 안에 있을 때
+        if gfx.mouse_cap == 1 then
+            if gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
+               gfx.mouse_y >= y and gfx.mouse_y <= y + h then
+                
+                reaper.gmem_write(30, 1) 
+                
+                gfx.set(1, 1, 1, 0.15)
+                gfx.rect(x, y, w, h, 1)
+            end
+        end
     end
 
     function draw_gonio(x, y, w, h, gain)
@@ -942,14 +954,24 @@ local ui_order = {1, 2, 3, 4, 5}
         -- [Right Click Logic]
             if gfx.mouse_cap == 2 then 
                 gfx.x, gfx.y = gfx.mouse_x, gfx.mouse_y
-                local is_docked = gfx.dock(-1) > 0
+                
+                -- 현재 도킹 상태 확인 (0이면 Float, 0보다 크면 도킹됨)
+                local current_dock_state = gfx.dock(-1) 
+                local is_docked = current_dock_state > 0
+                
                 local menu_str = (is_docked and "!" or "") .. "Dock to Docker|"
                 menu_str = menu_str .. "#For editing theme, run 'JKK_Visualizer Editor' from Action List"
                 
                 local selection = gfx.showmenu(menu_str)
                 
                 if selection == 1 then
-                    if is_docked then gfx.dock(0) else gfx.dock(513) end
+                    if is_docked then 
+                        -- 도킹되어 있으면 밖으로 빼냄 (Float)
+                        gfx.dock(0) 
+                    else 
+                        -- 밖으로 나와 있으면 무조건 위쪽 도커(513)로 집어넣음
+                        gfx.dock(513) 
+                    end
                 end
             end
         -- [Mouse Scroll Logic]
@@ -1075,6 +1097,14 @@ local ui_order = {1, 2, 3, 4, 5}
         gfx.update()
         reaper.defer(run)
     end
+
+    local function exit_cleanup()
+        local current_dock = gfx.dock(-1)
+        
+        reaper.SetExtState("JKK_Visualizer", "DockState", tostring(current_dock), true)
+    end
+
+reaper.atexit(exit_cleanup)
 
 run()
 
