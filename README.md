@@ -36,7 +36,7 @@ ReaImGui must be installed to use JKK_Visualizer.
         <img width="776" height="477" alt="Screenshot 2026-01-17 at 16 06 09" src="https://github.com/user-attachments/assets/b7bc3ceb-e893-4ff8-9f7f-6792095f4317" />
     5. You can now find and run JKK_Visualizer and JKK_Visualizer Editor in your Actions.
         <img width="1269" height="404" alt="Screenshot 2026-01-17 at 16 07 33" src="https://github.com/user-attachments/assets/8d69cccf-43d7-42f7-b6c0-612dcff37e49" />
-    6. Add on Master track `JKK_Visualizer`(jsfx file, you can find this in FX window). and Run the Action `JKK_Visualizer`
+    6. Add on Master track or Monitor FX slot `JKK_Visualizer`(jsfx file, you can find this in FX window). and Run the Action `JKK_Visualizer`
        <img width="653" height="213" alt="Screenshot 2026-01-22 at 23 43 43" src="https://github.com/user-attachments/assets/9bafe89e-0073-4d46-ade6-843de687d105" />
 
 
