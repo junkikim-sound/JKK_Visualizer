@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="JKK_Visualizer" commit="b7a528afac5e9545e89e753f3960a3637710ce3d">
+<index version="1" name="JKK_Visualizer" commit="36d3a013f164f1bc51324a6cd0e5b96ebf868131">
   <category name="JKK_Visualizer">
     <reapack name="JKK_Visualizer Editor.lua" type="script" desc="JKK_Visualizer Editor">
       <version name="0.9.3" author="Junki Kim" time="2026-01-19T03:06:38Z">
@@ -22,6 +22,10 @@
         <source main="main">https://github.com/junkikim-sound/JKK_Visualizer/raw/b7a528afac5e9545e89e753f3960a3637710ce3d/JKK_Visualizer/JKK_Visualizer.lua</source>
         <source type="effect" file="JKK_Visualizer.jsfx">https://github.com/junkikim-sound/JKK_Visualizer/raw/b7a528afac5e9545e89e753f3960a3637710ce3d/JKK_Visualizer/JKK_Visualizer.jsfx</source>
       </version>
+      <version name="1.0.1" author="Junki Kim" time="2026-02-21T05:35:32Z">
+        <source main="main">https://github.com/junkikim-sound/JKK_Visualizer/raw/36d3a013f164f1bc51324a6cd0e5b96ebf868131/JKK_Visualizer/JKK_Visualizer.lua</source>
+        <source type="effect" file="JKK_Visualizer.jsfx">https://github.com/junkikim-sound/JKK_Visualizer/raw/36d3a013f164f1bc51324a6cd0e5b96ebf868131/JKK_Visualizer/JKK_Visualizer.jsfx</source>
+      </version>
     </reapack>
   </category>
   <metadata>
@@ -31,7 +35,7 @@
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel0 \b \fs36 JKK_Visualizer\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 {\b A Professional Audio Analysis Toolkit for REAPER}\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 \u51200 ?\u45716 ? \u44172 ?\u51076 ? \u49324 ?\u50868 ?\u46300 ? \u46356 ?\u51088 ?\u51060 ?\u45320 ? \u44608 ?\u51456 ?\u44592 ?(Junki Kim)\u51077 ?\u45768 ?\u45796 ?. \u51060 ? \u49828 ?\u53356 ?\u47549 ?\u53944 ?\u45716 ? REAPER \u51204 ?\u50857 ? \u50724 ?\u46356 ?\u50724 ? \u49884 ?\u44033 ?\u54868 ? \u46020 ?\u44396 ?\u51077 ?\u45768 ?\u45796 ?. \u51200 ?\u45716 ? \u51204 ?\u47928 ? \u54532 ?\u47196 ?\u44536 ?\u47000 ?\u47672 ?\u44032 ? \u50500 ?\u45768 ?\u46972 ?\u49436 ? \u50724 ?\u47448 ?\u50752 ? \u48260 ?\u44536 ?\u51032 ? \u49688 ?\u51221 ?\u50640 ? \u51088 ?\u49888 ?\u51060 ? \u50630 ?\u49845 ?\u45768 ?\u45796 ?\u12636 ?\u12636 ? \u44536 ?\u47000 ?\u46020 ?... \u54841 ?\u49884 ?\u46972 ?\u46020 ? \u44060 ?\u49440 ?\u49324 ?\u54637 ?\u51060 ? \u51080 ?\u45796 ?\u47732 ? \u50616 ?\u51228 ?\u46304 ?\u51648 ? \u51200 ?\u50640 ?\u44172 ? \u47700 ?\u51068 ?\u51012 ? \u48372 ?\u45236 ?\u51452 ?\u49464 ?\u50836 ?!\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \u51200 ?\u45716 ? \u44172 ?\u51076 ? \u49324 ?\u50868 ?\u46300 ? \u46356 ?\u51088 ?\u51060 ?\u45320 ? \u44608 ?\u51456 ?\u44592 ?(Junki Kim)\u51077 ?\u45768 ?\u45796 ?. \u51060 ? \u49828 ?\u53356 ?\u47549 ?\u53944 ?\u45716 ? REAPER \u51204 ?\u50857 ? \u50724 ?\u46356 ?\u50724 ? \u49884 ?\u44033 ?\u54868 ? \u46020 ?\u44396 ?\u51077 ?\u45768 ?\u45796 ?. \u51200 ?\u45716 ? \u51204 ?\u47928 ? \u54532 ?\u47196 ?\u44536 ?\u47000 ?\u47672 ?\u44032 ? \u50500 ?\u45768 ?\u44592 ? \u46412 ?\u47928 ?\u50640 ? \u50724 ?\u47448 ?\u50752 ? \u48260 ?\u44536 ?\u51032 ? \u49688 ?\u51221 ?\u50640 ? \u54869 ?\u49888 ?\u51012 ? \u46300 ?\u47540 ? \u49692 ? \u50630 ?\u49845 ?\u45768 ?\u45796 ?... \u44536 ?\u47000 ?\u46020 ? \u54841 ?\u50668 ? \u44060 ?\u49440 ?\u49324 ?\u54637 ?\u51060 ? \u51080 ?\u45796 ?\u47732 ? \u50616 ?\u51228 ?\u46304 ?\u51648 ? \u51200 ?\u50640 ?\u44172 ? \u47700 ?\u51068 ?\u51012 ? \u48372 ?\u45236 ?\u51452 ?\u49464 ?\u50836 ?!\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 I am {\b Junki Kim}, a game sound designer. This script is a dedicated audio visualization tool for REAPER. As I am not a professional programmer, I may not be perfect at fixing every error or bug, but I am always open to feedback! If you have any suggestions or improvements, please feel free to email me.\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Contact: junkikim.sound@gmail.com\sa180\par}
 {\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
@@ -67,12 +71,12 @@ the ReaPack websit
 {\pard \ql \f0 \sa180 \li1440 \fi0 {\f1 https://github.com/junkikim-sound/JKK_Visualizer/raw/master/index.xml}\par}
 {\pard \ql \f0 \sa0 \li720 \fi-360 4.\tx360\tab Find {\b JKK_Visualizer} in the package list, right-click to {\b install}, and click {\b Apply}. \par}
 {\pard \ql \f0 \sa0 \li720 \fi-360 5.\tx360\tab You can now find and run JKK_Visualizer and JKK_Visualizer Editor in your Actions. \par}
-{\pard \ql \f0 \sa0 \li720 \fi-360 6.\tx360\tab Add on Master track {\f1 JKK_Visualizer}(jsfx file, you can find this in FX window). and Run the Action {\f1 JKK_Visualizer} \sa180\sa180\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 6.\tx360\tab Add on Master track or Monitor FX slot {\f1 JKK_Visualizer}(jsfx file, you can find this in FX window). and Run the Action {\f1 JKK_Visualizer} \sa180\sa180\par}
 {\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 \u55357 ?\u56960 ? 2. Introduction\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 {\cf1 [image: https://github.com/user-attachments/assets/908ef485-3651-493e-9ec7-62b69f6dda90]\cf0}\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 Key Features\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\b Multi-Module Interface}: Monitor LUFS, Goniometer, Symbiote, Scope, and Spectrum modules simultaneously on a single screen.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\b Multi-Module Interface}: Monitor LUFS, Goniometer, Symbiote, Scope, and Spectrum modules simultaneously on a single screen. Click the window to reset.\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\b Dynamic Symbiote}: A unique visualizer that evolves based on low-frequency responses, allowing you to "feel" the sound texture.\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\b Customizable Order}: Use the ImGui-based Editor to reorder modules and adjust sensitivity or theme colors in real-time.\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\b Global Speed Control}: Manage the Attack/Release response speed of all modules via a single master variable. You can adjust response speed by mouse wheel.\sa180\par}
