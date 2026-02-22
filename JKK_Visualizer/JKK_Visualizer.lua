@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 1.0.2
+-- @version 1.0.3
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -576,43 +576,39 @@ local ui_order = {1, 2, 3, 4, 5}
         local srate = reaper.gmem_read(1)
         if srate == 0 then srate = 48000 end
         local now = reaper.time_precise()
-        local target_max_hz = 48000 -- 무조건 화면 우측 끝에 표시할 최대 주파수
-        local max_k = target_max_hz * fft_size / srate -- 48kHz가 위치한 Bin 인덱스 계산
-        local k_max_log = math.log(max_k) -- X 좌표 정규화에 사용될 로그 스케일 최대치
+        local target_max_hz = 48000
+        local max_k = target_max_hz * fft_size / srate
+        local k_max_log = math.log(max_k)
         
         -- 1. Grid
         gfx.set(line_r, line_g, line_b, line_a)
-        local k_max_log = math.log(fft_bins)
+        -- local k_max_log = math.log(fft_bins)
         
         -- 2. Draw Spectrum (Fill & Peak Line)
-        local ox, oy = x, y + h       -- Fill용 이전 좌표
-        local pox, poy = x, y + h     -- Peak Line용 이전 좌표
+        local ox, oy = x, y + h
+        local pox, poy = x, y + h
         local k = 1
-        
         while k <= max_k do
             local k_int = math.floor(k)
-            local mag = reaper.gmem_read(300000 + k_int)
+            local k_frac = k - k_int
             
-            -- 1. 순수한 오디오 dB 값 계산 (Visual Gain 적용 전)
+            local k_idx = math.floor(k * 10)
+            
+            local mag1 = reaper.gmem_read(300000 + k_int)
+            local mag2 = reaper.gmem_read(300000 + k_int + 1)
+            local mag = mag1 + (mag2 - mag1) * k_frac
+
             local pure_db = 20 * math.log(mag + 0.0000001, 10)
-            
-            -- 2. Visual Gain(spec_offset) 적용
             local raw_db = pure_db - spec_offset
-            
-            -- 3. [노이즈 플로어 앵커 로직]
-            -- 만약 순수 오디오가 -120dB 이하라면 (사실상 무음이라면)
             if pure_db < -120 then 
-                -- Gain 값을 무시하고 화면 바닥(floor)보다 10dB 아래로 고정
                 raw_db = floor - 10 
             end
 
-            -- db 변수는 raw_db와 동일하게 사용
             local db = raw_db
 
-            -- [Area Smoothing Logic] 면 프리즈 효과
-            local smooth_db = spec_smooth_vals[k_int] or (floor - 10)
+            -- [Area Smoothing Logic]
+            local smooth_db = spec_smooth_vals[k_idx] or (floor - 10)
             
-            -- 💡 프리즈 상태가 아닐 때만 값 업데이트
             if not is_frozen then 
                 if raw_db >= smooth_db then
                     local attack_coef = math.min(1.0, 0.8 * g_signal_attack) 
@@ -620,49 +616,41 @@ local ui_order = {1, 2, 3, 4, 5}
                 else
                     smooth_db = smooth_db - area_decay_rate
                 end
-                spec_smooth_vals[k_int] = smooth_db -- 업데이트된 값을 저장
+                spec_smooth_vals[k_idx] = smooth_db
             end
-            -- 프리즈 상태라면 위 로직을 무시하므로 smooth_db는 멈춰있게 됨
 
             -- [Peak Hold Logic]
-            local current_peak = spec_peaks[k_int] or -144
-            local last_time = spec_peak_times[k_int] or 0
+            local current_peak = spec_peaks[k_idx] or -144
+            local last_time = spec_peak_times[k_idx] or 0
             
-            -- 💡 프리즈 상태가 아닐 때만 값 업데이트
             if not is_frozen then 
                 if db >= current_peak then
-                    spec_peaks[k_int] = db
-                    spec_peak_times[k_int] = now
+                    spec_peaks[k_idx] = db
+                    spec_peak_times[k_idx] = now
                 else
                     if (now - last_time) > peak_hold_time then
-                        spec_peaks[k_int] = current_peak - peak_decay_rate
+                        spec_peaks[k_idx] = current_peak - peak_decay_rate
                     end
                 end
             end
-            local peak_db = spec_peaks[k_int]
+            local peak_db = spec_peaks[k_idx]
 
-            -- --- 좌표 계산 ---
-            -- 1) Real-time Fill (면)
+            -- 좌표 계산
             local t_raw = (smooth_db - floor) / range
             t_raw = math.max(0, math.min(1, t_raw))
             local t = t_raw ^ 1.5 
             
             local dy = y + h - (t * h)
             
-            -- 피크 라인도 동일하게 적용
             local pt_raw = (peak_db - floor) / range
             local pt = math.max(0, math.min(1, pt_raw)) ^ 1.5
             local pdy = y + h - (pt * h)
 
-            -- X 좌표 (공통)
             local x_norm = math.log(k) / k_max_log
             local dx = x + (x_norm * w)
             
-            -- --- 그리기 (Draw) ---
-            -- A. Filled Area (Gradient)
+            -- --- 그리기 (Draw)
             if t < midpoint then
-                -- [구간 A -> B] (0.0 ~ 0.5 사이)
-                -- 0~0.5 범위를 0~1로 확장하여 비율(ratio) 계산
                 local local_t = t / midpoint 
                 local curve = local_t ^ steepness
                 sptr_r = sptr1_r + (sptr2_r - sptr1_r) * curve
@@ -672,7 +660,6 @@ local ui_order = {1, 2, 3, 4, 5}
             else
                 local local_t = (t - midpoint) / (1 - midpoint)
                 local curve = local_t ^ steepness
-                
                 sptr_r = sptr2_r + (sptr3_r - sptr2_r) * curve
                 sptr_g = sptr2_g + (sptr3_g - sptr2_g) * curve
                 sptr_b = sptr2_b + (sptr3_b - sptr2_b) * curve
@@ -694,9 +681,14 @@ local ui_order = {1, 2, 3, 4, 5}
             ox, oy = dx, dy
             pox, poy = dx, pdy
             
-            -- Step 증가
             local step = 1
-            if k > 50 then step = k * 0.05 end
+            if k <= 200 then
+                step = 0.2
+            else
+                step = k * 0.005
+            end
+            -- step = math.min(step, 3) 
+            
             k = k + step
         end
         
@@ -721,7 +713,7 @@ local ui_order = {1, 2, 3, 4, 5}
             if gfx.mouse_x >= x and gfx.mouse_x <= x + w and gfx.mouse_y >= y and gfx.mouse_y <= y + h then
                 -- 1. 마우스 X좌표를 주파수로 역산 (로그 스케일 기준)
                 local x_norm = (gfx.mouse_x - x) / w
-                local k_max_log = math.log(fft_bins)
+                -- local k_max_log = math.log(fft_bins)
                 local k_val = math.exp(x_norm * k_max_log)
                 local hz = k_val * srate / fft_size
                 
