@@ -61,6 +61,8 @@ ReaImGui must be installed to use JKK_Visualizer.
 ### v1.0.2 (Feb 22, 2026)
 - Added **Mouse Click-to-Freeze** on Spectrum.
 - Fixed sample rate indexing bug (Now shows full Nyquist range instead of 12kHz cap).
+### v1.0.3 (Feb 23, 2026)
+- Smoother curves in low-end & clearer rendering in high-end.
 
 ---
 ## 🌊 About the Author
