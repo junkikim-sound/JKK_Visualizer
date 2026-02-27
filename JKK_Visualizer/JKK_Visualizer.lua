@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 1.0.3
+-- @version 1.0.4
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -203,7 +203,7 @@ local ui_order = {1, 2, 3, 4, 5}
                 -- 1. [핵심] 0dB 초과 시 피크 좌표 저장
                 if peak_intensity >= true_zero_limit and #gonio_peaks < gonio_max_peak_dots then
                     local cl, cr = math.max(-visual_limit, math.min(visual_limit, l)), math.max(-visual_limit, math.min(visual_limit, r))
-                    local px, py = cx + (cl - cr) * dot_size, cy - (cl + cr) * dot_size
+                    local px, py = cx + (cr - cl) * dot_size, cy - (cl + cr) * dot_size
                     table.insert(gonio_peaks, {px = px, py = py, time = now})
                 end
 
@@ -230,7 +230,7 @@ local ui_order = {1, 2, 3, 4, 5}
                 end
 
                 local cl, cr = math.max(-visual_limit, math.min(visual_limit, l)), math.max(-visual_limit, math.min(visual_limit, r))
-                local px, py = cx + (cl - cr) * dot_size, cy - (cl + cr) * dot_size
+                local px, py = cx + (cr - cl) * dot_size, cy - (cl + cr) * dot_size
 
                 gfx.set(gonio_r, gonio_g, gonio_b, (1 - (i / trail_len)))
                 gfx.x, gfx.y = px, py
@@ -1128,6 +1128,7 @@ local ui_order = {1, 2, 3, 4, 5}
 reaper.atexit(exit_cleanup)
 
 run()
+
 
 
 
