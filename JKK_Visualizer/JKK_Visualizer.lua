@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 1.0.4
+-- @version 1.0.5
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -126,7 +126,7 @@ local ui_order = {1, 2, 3, 4, 5}
 
         -- Peak 값 표시
         gfx.setfont(1, "Arial", base_peak_size * g_font_scale, "b")
-        gfx.set(scp3_r, scp3_g, scp3_b, scp3_a ) -- 황금색/노란색 계열
+        gfx.set(scp3_r, scp3_g, scp3_b, scp3_a )
         local p_str = (mom_peak <= -100) and "- Inf" or string.format("%.1f", mom_peak)
         local pw, ph = gfx.measurestr(p_str)
         gfx.x, gfx.y = cx - pw * 0.5, m_py + unit_h * 0.80
@@ -135,7 +135,7 @@ local ui_order = {1, 2, 3, 4, 5}
         -- === [하단: SHORT-TERM] ===
         local s_py = y + unit_h
         gfx.set(line_r, line_g, line_b, line_a)
-        gfx.line(x + 10, s_py + 8, x + w - 10, s_py + 8) -- 구분선
+        gfx.line(x + 10, s_py + 8, x + w - 10, s_py + 8) 
 
         gfx.setfont(1, "Arial", base_label_size * g_font_scale) 
         gfx.set(text_r, text_g, text_b, text_a)
@@ -153,7 +153,6 @@ local ui_order = {1, 2, 3, 4, 5}
     
         gfx.setfont(1, "Arial", base_title_size * g_font_scale)
 
-        -- 마우스 왼쪽 버튼(1)이 눌렸고, 마우스가 LUFS 모듈 영역 안에 있을 때
         if gfx.mouse_cap == 1 then
             if gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
                gfx.mouse_y >= y and gfx.mouse_y <= y + h then
@@ -200,14 +199,12 @@ local ui_order = {1, 2, 3, 4, 5}
                 local peak_intensity = math.max(math.abs(l), math.abs(r))
                 local is_clipping = peak_intensity >= true_zero_limit
                 
-                -- 1. [핵심] 0dB 초과 시 피크 좌표 저장
                 if peak_intensity >= true_zero_limit and #gonio_peaks < gonio_max_peak_dots then
                     local cl, cr = math.max(-visual_limit, math.min(visual_limit, l)), math.max(-visual_limit, math.min(visual_limit, r))
                     local px, py = cx + (cr - cl) * dot_size, cy - (cl + cr) * dot_size
                     table.insert(gonio_peaks, {px = px, py = py, time = now})
                 end
 
-                -- 일반 점 색상 보간
                 local t = math.min(1.0, peak_intensity / visual_limit)
                 local gonio_r, gonio_g, gonio_b, gonio_a
 
@@ -237,7 +234,6 @@ local ui_order = {1, 2, 3, 4, 5}
                 gfx.setpixel(gonio_r, gonio_g, gonio_b)
             end
             
-            -- 저장된 피크 점들을 2초 동안 별도 색상으로 표시
             for i = #gonio_peaks, 1, -1 do
                 local p = gonio_peaks[i]
                 if (now - p.time) > gonio_peak_hold_time then
@@ -248,7 +244,7 @@ local ui_order = {1, 2, 3, 4, 5}
                 end
             end
         -- phase correction
-                -- [Phase Correlation Meter 추가]
+            -- [Phase Correlation Meter 추가]
             local write_idx = reaper.gmem_read(0)
             local idx = (write_idx - 1) % buf_len
             local l = reaper.gmem_read(10000 + idx)
@@ -272,12 +268,12 @@ local ui_order = {1, 2, 3, 4, 5}
             local bar_h = 4
             local bar_w = w * 0.6
             local bar_x = x + (w - bar_w) * 0.5
-            local bar_y = y + h - 15 -- 하단 라벨 위쪽
+            local bar_y = y + h - 15
             
             -- 배경 바 (가이드)
             gfx.set(line_r, line_g, line_b, line_a)
             gfx.rect(bar_x, bar_y, bar_w, bar_h, 0)
-            gfx.line(bar_x + bar_w * 0.5, bar_y - 2, bar_x + bar_w * 0.5, bar_y + bar_h + 2) -- 0점 표시
+            gfx.line(bar_x + bar_w * 0.5, bar_y - 2, bar_x + bar_w * 0.5, bar_y + bar_h + 2)
             
             -- 현재 상태 바
             local indicator_x = bar_x + (bar_w * 0.5) + (phase_smooth * (bar_w * 0.5))
@@ -293,19 +289,19 @@ local ui_order = {1, 2, 3, 4, 5}
             gfx.rect(indicator_x - 1, bar_y - 2, 3, bar_h + 4, 1)
 
             -- 텍스트 라벨 (옵션)
-            gfx.setfont(1, "Arial", (base_title_size - 4) * g_font_scale) -- 폰트 설정
-            local label_padding = 5 -- 바와 텍스트 사이의 간격
+            gfx.setfont(1, "Arial", (base_title_size - 4) * g_font_scale)
+            local label_padding = 5
 
             -- "-1" 라벨 정렬 및 출력
             local tw_minus, th_minus = gfx.measurestr("-1")
             gfx.x = bar_x - tw_minus - label_padding
-            gfx.y = bar_y + (bar_h * 1) - (th_minus * 0.5) -- 바의 세로 중앙 정렬
+            gfx.y = bar_y + (bar_h * 1) - (th_minus * 0.5)
             gfx.drawstr("-1")
 
             -- "+1" 라벨 정렬 및 출력
             local tw_plus, th_plus = gfx.measurestr("+1")
             gfx.x = bar_x + bar_w + label_padding
-            gfx.y = bar_y + (bar_h * 1) - (th_plus * 0.5) -- 바의 세로 중앙 정렬
+            gfx.y = bar_y + (bar_h * 1) - (th_plus * 0.5)
             gfx.drawstr("+1")
         
         gfx.set(line_r, line_g, line_b, line_a)
@@ -475,11 +471,9 @@ local ui_order = {1, 2, 3, 4, 5}
         local scan_stride = math.max(1, math.floor(step / 8)) 
 
         for m = 0, w - 1 do
-            -- 현재 픽셀(m)이 보여줘야 할 데이터의 시작 위치 계산
             local start_pos = (write_idx - (w - m) * step)
             
             -- [Min-Max 탐색]
-            -- 해당 구간(step) 안에서 가장 높은 값(max_v)과 낮은 값(min_v)을 찾습니다.
             local max_v = -100 -- 초기값
             local min_v = 100  -- 초기값
             local abs_peak = 0 -- 색상 결정을 위한 절대값 피크
@@ -499,11 +493,9 @@ local ui_order = {1, 2, 3, 4, 5}
             local draw_max = max_v * zoom * 0.5
             local draw_min = min_v * zoom * 0.5
             
-            -- 좌표 변환 (화면 위아래 뒤집힘 주의: -를 붙여야 함)
             local y_top = cy - (draw_max * h)
             local y_bottom = cy - (draw_min * h)
             
-            -- 화면 밖으로 나가는 것 방지 (Clamping)
             y_top = math.max(y, math.min(y + h, y_top))
             y_bottom = math.max(y, math.min(y + h, y_bottom))
             
@@ -532,12 +524,9 @@ local ui_order = {1, 2, 3, 4, 5}
             
             gfx.set(scp_r, scp_g, scp_b, scp_a)
 
-            -- [그리기] 점을 잇는 게 아니라, 수직선(Bar)을 그립니다.
-            -- 만약 파형이 거의 없어서 위아래 차이가 1픽셀 미만이면 점을 찍습니다.
             if math.abs(y_bottom - y_top) < 1 then
                 gfx.rect(x + m, y_top, 1, 1)
             else
-                -- 윗점에서 아랫점까지 선 긋기
                 gfx.line(x + m, y_top, x + m, y_bottom)
             end
         end
@@ -711,43 +700,37 @@ local ui_order = {1, 2, 3, 4, 5}
         
         -- [draw_spectrum 함수]
             if gfx.mouse_x >= x and gfx.mouse_x <= x + w and gfx.mouse_y >= y and gfx.mouse_y <= y + h then
-                -- 1. 마우스 X좌표를 주파수로 역산 (로그 스케일 기준)
+                -- 1. 마우스 X좌표를 주파수로 역산
                 local x_norm = (gfx.mouse_x - x) / w
                 -- local k_max_log = math.log(fft_bins)
                 local k_val = math.exp(x_norm * k_max_log)
                 local hz = k_val * srate / fft_size
                 
-                -- 2. 정보 텍스트 생성 (dB 제외)
+                -- 2. 정보 텍스트 생성
                 local note = freq_to_note(hz)
                 local info_text = string.format("%.0f Hz (%s)", hz, note)
                 
                 -- 3. 툴팁 그리기
-                gfx.setfont(1, "Arial", (base_title_size) * g_font_scale) -- 툴팁용 작은 폰트
+                gfx.setfont(1, "Arial", (base_title_size) * g_font_scale)
                 local tw, th = gfx.measurestr(info_text)
                 local tx, ty = gfx.mouse_x + 10, gfx.mouse_y - 20
                 
-                -- 화면 밖으로 나가지 않게 조정
                 if tx + tw > gfx.w then tx = gfx.mouse_x - tw - 10 end
                 if ty < 0 then ty = gfx.mouse_y + 20 end
                 
-                -- 배경 사각형 (테마 색상 활용)
                 gfx.set(bg_r, bg_g, bg_b, 0.9) 
                 gfx.rect(tx - 4, ty - 2, tw + 8, th + 4, 1)
                 
-                -- 테두리 선 추가 (가독성 향상)
                 gfx.set(line_r, line_g, line_b, 0.5)
                 gfx.rect(tx - 4, ty - 2, tw + 8, th + 4, 0)
 
-                -- 텍스트 출력
                 gfx.set(1, 1, 1, 1) 
                 gfx.x, gfx.y = tx, ty
                 gfx.drawstr(info_text)
                 
-                -- 4. 마우스 위치 가이드 세로선
                 gfx.set(line_r, line_g, line_b, 0.3)
                 gfx.line(gfx.mouse_x, y, gfx.mouse_x, y + h)
                 
-                -- 폰트 원복 (중요)
                 gfx.setfont(1, "Arial", base_title_size * g_font_scale)
             end
 
@@ -901,10 +884,9 @@ local ui_order = {1, 2, 3, 4, 5}
         end
 
     -- Function: Initialize_System
-        local SECTION = "JKK_Visualizer" -- [중요] 에디터와 똑같은 이름이어야 함!
+        local SECTION = "JKK_Visualizer"
 
         local function Initialize_System()
-            -- (A) ExtState에서 저장된 값 불러오기 시도
             local function load_color(mem_idx, ext_key)
                 if reaper.HasExtState(SECTION, "MEM_"..mem_idx) then
                     reaper.gmem_write(mem_idx, tonumber(reaper.GetExtState(SECTION, "MEM_"..mem_idx)))
@@ -914,10 +896,7 @@ local ui_order = {1, 2, 3, 4, 5}
             end
 
             -- 색상 불러오기 (실패하면 nil 반환)
-            local loaded = load_color(1000, "MEM_1000") -- 배경색 R값만 체크해봐도 됨
-
-            -- (B) 저장된 값이 없거나, gmem이 비어있으면(0이면) -> 기본값 강제 주입
-            -- 배경색(1000번지)의 Alpha값(1003)이 0이면 "초기화 안 됨"으로 간주
+            local loaded = load_color(1000, "MEM_1000")
             if reaper.gmem_read(1003) == 0 then
                 -- Helper: gmem에 RGBA 쓰기
                 local function write_def(idx, col)
@@ -935,7 +914,6 @@ local ui_order = {1, 2, 3, 4, 5}
             end
 
             -- (C) 모듈 순서 및 활성화 상태 불러오기
-            -- 순서 불러오기
             if reaper.HasExtState(SECTION, "ModuleOrder") then
                 local order_str = reaper.GetExtState(SECTION, "ModuleOrder")
                 local idx = 1
@@ -944,7 +922,6 @@ local ui_order = {1, 2, 3, 4, 5}
                     idx = idx + 1
                 end
             else
-                -- 저장된 순서 없으면 기본 순서 (1,2,3,4,5) 입력
                 for i=1, 5 do reaper.gmem_write(1100 + i, i) end
             end
 
@@ -957,26 +934,26 @@ local ui_order = {1, 2, 3, 4, 5}
                     idx = idx + 1
                 end
             else
-                -- 저장된 값 없으면 전부 켜기(1)
                 for i=1, 5 do reaper.gmem_write(1150 + i, 1) end
             end
         end
-
-        -- [핵심] 스크립트 시작 시 딱 한 번 실행!
         Initialize_System()
 
 ----------------------------------------------------------
 -- UI Loops
 ----------------------------------------------------------
     function run()
+        local char = gfx.getchar()
         if gfx.getchar() == 27 then return end 
+        if char == 32 then
+            reaper.Main_OnCommand(40044, 0) -- Transport: Play/stop
+        end
         update_settings_from_gmem()
 
         -- [Right Click Logic]
             if gfx.mouse_cap == 2 then 
                 gfx.x, gfx.y = gfx.mouse_x, gfx.mouse_y
                 
-                -- 현재 도킹 상태 확인 (0이면 Float, 0보다 크면 도킹됨)
                 local current_dock_state = gfx.dock(-1) 
                 local is_docked = current_dock_state > 0
                 
@@ -987,10 +964,8 @@ local ui_order = {1, 2, 3, 4, 5}
                 
                 if selection == 1 then
                     if is_docked then 
-                        -- 도킹되어 있으면 밖으로 빼냄 (Float)
                         gfx.dock(0) 
                     else 
-                        -- 밖으로 나와 있으면 무조건 위쪽 도커(513)로 집어넣음
                         gfx.dock(513) 
                     end
                 end
@@ -1001,13 +976,10 @@ local ui_order = {1, 2, 3, 4, 5}
                 local current_gain = reaper.gmem_read(2)
                 
                 -- 2. 휠 방향에 따라 값 변경 (감도 조절: 0.05)
-                -- 휠을 위로 올리면(+) 게인 증가, 내리면(-) 게인 감소
                 local sensitivity = 0.02
                 local change = (gfx.mouse_wheel / 120) * sensitivity 
-                -- (참고: 리퍼/OS에 따라 휠 한 칸이 120일 수도, 1일 수도 있습니다. 
-                -- 너무 빠르면 120을 나누고, 너무 느리면 120을 지우세요.)
                 
-                if math.abs(change) < 0.01 then -- 미세 조정 보정
+                if math.abs(change) < 0.01 then 
                      change = (gfx.mouse_wheel > 0) and 0.02 or -0.02
                 end
 
@@ -1019,15 +991,11 @@ local ui_order = {1, 2, 3, 4, 5}
 
                 -- 4. 변경된 값 저장 (gmem & ExtState)
                 reaper.gmem_write(2, current_gain)
-                -- (선택 사항) 영구 저장을 원하면 아래 주석 해제 (하지만 너무 빈번한 저장은 비추천)
-                -- reaper.SetExtState("JKK_Visualizer", "MEM_2", tostring(current_gain), true)
 
-                -- 5. 휠 값 초기화 (필수! 안 하면 계속 돌아감)
+                -- 5. 휠 값 초기화
                 gfx.mouse_wheel = 0
                 
-                -- [보너스] 화면 중앙에 현재 게인 값 잠시 띄우기 위한 변수 설정
-                -- (이 변수는 run 함수 밖, 전역 변수로 선언해두는 것이 좋습니다: local gain_popup_time = 0)
-                gain_popup_timer = 30 -- 약 0.5초간 표시 (30프레임)
+                gain_popup_timer = 30
             end
 
         -- [Value Calculation]
@@ -1052,18 +1020,12 @@ local ui_order = {1, 2, 3, 4, 5}
             [5] = 0.45  -- Spectrum
         }
 
-        -- [Step 1] 활성화된 모듈의 총 비율과 개수 계산
-        -- 모듈이 꺼지면 남은 모듈들이 화면을 꽉 채우기 위해 필요합니다.
         local total_active_ratio = 0
         local active_count = 0
         
         for i = 1, 5 do
             local mod_id = ui_order[i]
-            -- 1150 + id 값을 읽어 활성 상태 확인 (1=On, 0=Off)
-            -- 에디터가 아직 값을 안 썼을 경우를 대비해 기본값 1 처리
             local val = reaper.gmem_read(1150 + mod_id)
-            -- 초기에 값이 0일 수도 있으므로, 저장된 적이 없으면 1로 간주하는 안전장치 필요 시 추가 가능
-            -- 여기서는 에디터에서 기본적으로 1을 쓴다고 가정
             
             if val == 1 then
                 total_active_ratio = total_active_ratio + module_widths[mod_id]
@@ -1071,12 +1033,10 @@ local ui_order = {1, 2, 3, 4, 5}
             end
         end
 
-        -- 만약 모든 모듈이 꺼져있다면 0으로 나누는 오류 방지
         if total_active_ratio == 0 then total_active_ratio = 1 end
 
-        -- [Step 2] 그리기 루프
         local current_x = 0
-        local drawn_count = 0 -- 실제로 그려진 모듈 수 카운트
+        local drawn_count = 0
 
         for i = 1, 5 do
             local mod_id = ui_order[i]
@@ -1085,16 +1045,13 @@ local ui_order = {1, 2, 3, 4, 5}
             if is_active then
                 drawn_count = drawn_count + 1
                 
-                -- 비율 재계산 (꺼진 모듈만큼 너비 확장)
                 local ratio = module_widths[mod_id] / total_active_ratio
                 local w = math.floor(gfx.w * ratio)
                 
-                -- 마지막으로 그려지는 모듈은 남은 공간을 모두 채움 (빈틈 방지)
                 if drawn_count == active_count then 
                     w = gfx.w - current_x 
                 end
 
-                -- 1. 모듈 내용 그리기
                 if mod_id == 1 then draw_lufs(current_x, 0, w, gfx.h)
                 elseif mod_id == 2 then draw_gonio(current_x, 0, w, gfx.h, gain)
                 elseif mod_id == 3 then draw_symbiote(current_x, 0, w, gfx.h, gain)
@@ -1102,8 +1059,6 @@ local ui_order = {1, 2, 3, 4, 5}
                 elseif mod_id == 5 then draw_spectrum(current_x, 0, w, gfx.h, ceil, floor)
                 end
                 
-                -- 2. 왼쪽 경계선 그리기
-                -- 화면의 가장 왼쪽에 있는 모듈(첫 번째로 그려지는 녀석)은 경계선을 배경색으로 숨김
                 if drawn_count == 1 then
                     gfx.set(bg_r, bg_g, bg_b, bg_a)
                 else
