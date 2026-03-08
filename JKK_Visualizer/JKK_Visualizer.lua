@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 1.0.5
+-- @version 1.0.6
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -169,71 +169,84 @@ local ui_order = {1, 2, 3, 4, 5}
         -- Goniometer
             local base_trail = 2000
             local trail_len = math.floor(base_trail / (g_signal_release / 2))
-            local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
+            local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and
                           gfx.mouse_y >= y and gfx.mouse_y <= y + h)
             if is_hover then
-                trail_len = trail_len * 5
+                trail_len = trail_len * 7
             end
 
             local cx, cy = x + w * 0.5, y + h * 0.45
             local dim_limit = math.min(w, h)
-            local guide_size = dim_limit * 0.35 
-            local dot_size = dim_limit * 0.35 * gain 
-            local now = reaper.time_precise()
-            
+            local guide_size = dim_limit * 0.37
+            local dot_size = dim_limit * 0.25 * gain 
+            local now = reaper.time_precise()            
+
             local true_zero_limit = 1.0 
             local visual_limit = guide_size / (2 * dot_size)
 
             -- 가이드 라인 그리기
             gfx.set(line_r, line_g, line_b, line_a * 3 / 2)
             gfx.line(cx - guide_size, cy - guide_size, cx + guide_size, cy + guide_size)
-            gfx.line(cx + guide_size, cy - guide_size, cx - guide_size, cy + guide_size)
-            
-            local write_idx = reaper.gmem_read(0)
-            
+            gfx.line(cx + guide_size, cy - guide_size, cx - guide_size, cy + guide_size)            
+
+            local write_idx = reaper.gmem_read(0)            
+
             -- 일반 점들 그리기 루프
             for i = 0, trail_len, 2 do
                 local idx = (write_idx - i - 1) % buf_len
                 local l, r = reaper.gmem_read(10000 + idx), reaper.gmem_read(110000 + idx)
-                
+
+                local exp = 0.8
+                local l_scaled = (l >= 0 and 1 or -1) * (math.abs(l) ^ exp)
+                local r_scaled = (r >= 0 and 1 or -1) * (math.abs(r) ^ exp)
+
                 local peak_intensity = math.max(math.abs(l), math.abs(r))
-                local is_clipping = peak_intensity >= true_zero_limit
-                
+                local is_clipping = peak_intensity >= true_zero_limit                
+
+                -- 1. [핵심] 0dB 초과 시 피크 좌표 저장
                 if peak_intensity >= true_zero_limit and #gonio_peaks < gonio_max_peak_dots then
-                    local cl, cr = math.max(-visual_limit, math.min(visual_limit, l)), math.max(-visual_limit, math.min(visual_limit, r))
-                    local px, py = cx + (cr - cl) * dot_size, cy - (cl + cr) * dot_size
+                    local exp = 0.8
+                    local l_p_scaled = (l >= 0 and 1 or -1) * (math.abs(l) ^ exp)
+                    local r_p_scaled = (r >= 0 and 1 or -1) * (math.abs(r) ^ exp)
+
+                    local cl = math.max(-visual_limit, math.min(visual_limit, l_p_scaled))
+                    local cr = math.max(-visual_limit, math.min(visual_limit, r_p_scaled))
+                    local px, py = cx + (cr - cl) * dot_size, cy - (cr + cl) * dot_size
                     table.insert(gonio_peaks, {px = px, py = py, time = now})
                 end
 
+                -- 일반 점 색상 보간
                 local t = math.min(1.0, peak_intensity / visual_limit)
                 local gonio_r, gonio_g, gonio_b, gonio_a
 
                 if t < midpoint then
                     local local_t = t / midpoint 
-                    local curve = local_t ^ steepness
-                    
+                    local curve = local_t ^ steepness                    
+
                     gonio_r = dot1_r + (dot2_r - dot1_r) * curve
                     gonio_g = dot1_g + (dot2_g - dot1_g) * curve
                     gonio_b = dot1_b + (dot2_b - dot1_b) * curve
                     gonio_a = dot1_a + (dot2_a - dot1_a) * curve
                 else
                     local local_t = (t - midpoint) / (1 - midpoint)
-                    local curve = local_t ^ steepness
-                    
+                    local curve = local_t ^ steepness                    
+
                     gonio_r = dot2_r + (dot3_r - dot2_r) * curve
                     gonio_g = dot2_g + (dot3_g - dot2_g) * curve
                     gonio_b = dot2_b + (dot3_b - dot2_b) * curve
                     gonio_a = dot2_a + (dot3_a - dot2_a) * curve
                 end
 
-                local cl, cr = math.max(-visual_limit, math.min(visual_limit, l)), math.max(-visual_limit, math.min(visual_limit, r))
-                local px, py = cx + (cr - cl) * dot_size, cy - (cl + cr) * dot_size
+                local cl = math.max(-visual_limit, math.min(visual_limit, l_scaled))
+                local cr = math.max(-visual_limit, math.min(visual_limit, r_scaled))
+                local px, py = cx + (cr - cl) * dot_size, cy - (cr + cl) * dot_size
 
                 gfx.set(gonio_r, gonio_g, gonio_b, (1 - (i / trail_len)))
                 gfx.x, gfx.y = px, py
                 gfx.setpixel(gonio_r, gonio_g, gonio_b)
-            end
-            
+            end            
+
+            -- 저장된 피크 점들을 2초 동안 별도 색상으로 표시
             for i = #gonio_peaks, 1, -1 do
                 local p = gonio_peaks[i]
                 if (now - p.time) > gonio_peak_hold_time then
@@ -243,8 +256,8 @@ local ui_order = {1, 2, 3, 4, 5}
                     gfx.rect(p.px - 1, p.py - 1, 2, 2) 
                 end
             end
+
         -- phase correction
-            -- [Phase Correlation Meter 추가]
             local write_idx = reaper.gmem_read(0)
             local idx = (write_idx - 1) % buf_len
             local l = reaper.gmem_read(10000 + idx)
@@ -254,56 +267,56 @@ local ui_order = {1, 2, 3, 4, 5}
             local dot_product = l * r
             local mag_l = l * l
             local mag_r = r * r
-            local denom = math.sqrt(mag_l * mag_r)
-            
+            local denom = math.sqrt(mag_l * mag_r)            
+
             local current_phase = 0
             if denom > 0.000001 then
                 current_phase = dot_product / denom
             end
 
             -- 2. 스무딩 (너무 빨리 변하지 않게)
-            phase_smooth = phase_smooth + (current_phase - phase_smooth) * 0.1
-            
+            phase_smooth = phase_smooth + (current_phase - phase_smooth) * 0.1            
+
             -- 3. UI 그리기 (Gonio 하단에 배치)
             local bar_h = 4
             local bar_w = w * 0.6
             local bar_x = x + (w - bar_w) * 0.5
-            local bar_y = y + h - 15
-            
+            local bar_y = y + h - 15 -- 하단 라벨 위쪽            
+
             -- 배경 바 (가이드)
             gfx.set(line_r, line_g, line_b, line_a)
             gfx.rect(bar_x, bar_y, bar_w, bar_h, 0)
-            gfx.line(bar_x + bar_w * 0.5, bar_y - 2, bar_x + bar_w * 0.5, bar_y + bar_h + 2)
-            
+            gfx.line(bar_x + bar_w * 0.5, bar_y - 2, bar_x + bar_w * 0.5, bar_y + bar_h + 2)            
+
             -- 현재 상태 바
             local indicator_x = bar_x + (bar_w * 0.5) + (phase_smooth * (bar_w * 0.5))
-            
+
             -- 색상 결정 (양수면 Cyan 계열, 음수면 Red 계열)
             if phase_smooth >= 0 then
                 gfx.set(dot2_r, dot2_g, dot2_b, 0.8) -- 정위상 (Mid Color)
             else
                 gfx.set(1, 0, 0, 0.8) -- 역위상 (Red)
-            end
-            
+            end            
+
             -- 인디케이터 그리기 (작은 사각형 혹은 선)
             gfx.rect(indicator_x - 1, bar_y - 2, 3, bar_h + 4, 1)
 
             -- 텍스트 라벨 (옵션)
-            gfx.setfont(1, "Arial", (base_title_size - 4) * g_font_scale)
-            local label_padding = 5
+            gfx.setfont(1, "Arial", (base_title_size - 4) * g_font_scale) -- 폰트 설정
+            local label_padding = 5 -- 바와 텍스트 사이의 간격
 
             -- "-1" 라벨 정렬 및 출력
             local tw_minus, th_minus = gfx.measurestr("-1")
             gfx.x = bar_x - tw_minus - label_padding
-            gfx.y = bar_y + (bar_h * 1) - (th_minus * 0.5)
+            gfx.y = bar_y + (bar_h * 1) - (th_minus * 0.5) -- 바의 세로 중앙 정렬
             gfx.drawstr("-1")
 
             -- "+1" 라벨 정렬 및 출력
             local tw_plus, th_plus = gfx.measurestr("+1")
             gfx.x = bar_x + bar_w + label_padding
-            gfx.y = bar_y + (bar_h * 1) - (th_plus * 0.5)
+            gfx.y = bar_y + (bar_h * 1) - (th_plus * 0.5) -- 바의 세로 중앙 정렬
             gfx.drawstr("+1")
-        
+
         gfx.set(line_r, line_g, line_b, line_a)
         gfx.setfont(1, "Arial", base_title_size * g_font_scale)
         gfx.x, gfx.y = x + 5, y + 5
