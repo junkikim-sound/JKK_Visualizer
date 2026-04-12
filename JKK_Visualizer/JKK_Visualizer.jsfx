@@ -7,12 +7,16 @@ options:no_meter
 options:gmem=JKK_Visualizer_Mem
 
 // --- 슬라이더 설정 ---
-slider1:0.5<0,1,0.001>Visual Gain
+slider1:0.5<0,1,0.001>Gonio Gain
+slider2:0.5<0,1,0.001>Scope Gain
+slider3:0.5<0,1,0.001>Symbiote Gain
+slider4:0.5<0,1,0.001>Spectrum Gain
+slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
 // slider2:0.25<0,1,0.001>Spectrum Floor (Macro %)
 
 @init
     // === [기존 초기화] ===
-    slider2 = 0.25;
+    slider5 = 0.25;
     idx = 0;
     buf_len = 100000;
     fft_size = 4096;
@@ -76,17 +80,27 @@ slider1:0.5<0,1,0.001>Visual Gain
     i_win_len = 1 / (m_win_cnt * win_len); // M용 정규화 계수
     i_win_len2 = 1 / (s_win_cnt * win_len); // S용 정규화 계수
 
+    // FFT Overlap을 위한 변수 세팅
+    hop_size = 1024;  // 1024면 75% 겹침(4배 빠름). 512면 87.5% 겹침(8배 빠름)
+    hop_cnt = 0;
+    audio_buf = 900000; // 최근 4096개 원본 오디오를 뺑뺑이로 담아둘 새 원형 버퍼 번지
+    audio_idx = 0;
+
 @slider
-    gmem[2] = slider1;
-    gmem[3] = slider2;
+    gmem[2] = slider1; // Gonio
+    gmem[6] = slider3; // Scope
+    gmem[7] = slider2; // Symbiote
+    gmem[8] = slider4; // Spectrum
+    gmem[3] = slider5; // Floor
 
 @block
     gmem[1] = srate;
-
-    abs(gmem[2] - slider1) > 0.00001 ? (
-        slider1 = gmem[2];        // 1. 내부 변수 업데이트
-        slider_automate(slider1); // 2. UI 슬라이더 위치 강제 이동 (중요!)
-    );
+    // UI 슬라이더 오토메이션 강제 동기화
+    abs(gmem[2] - slider1) > 0.00001 ? ( slider1 = gmem[2]; slider_automate(slider1); );
+    abs(gmem[6] - slider2) > 0.00001 ? ( slider2 = gmem[6]; slider_automate(slider3); );
+    abs(gmem[7] - slider3) > 0.00001 ? ( slider3 = gmem[7]; slider_automate(slider2); );
+    abs(gmem[8] - slider4) > 0.00001 ? ( slider4 = gmem[8]; slider_automate(slider4); );
+    abs(gmem[3] - slider5) > 0.00001 ? ( slider5 = gmem[3]; slider_automate(slider5); );
     
     // [리셋 체크] Lua에서 30번지에 1을 쓰면 리셋
     gmem[30] > 0 ? (
@@ -137,20 +151,37 @@ slider1:0.5<0,1,0.001>Visual Gain
     idx = (idx + 1) % buf_len;
     gmem[0] = idx;
 
-    // FFT 처리
-    fft_buf[fft_idx * 2] = in_mono * window[fft_idx]; // 짝수 인덱스: 실수부 (오디오 데이터)
-    fft_buf[fft_idx * 2 + 1] = 0;                     // 홀수 인덱스: 허수부 (0으로 채움)
-    fft_idx += 1;
-    
-    fft_idx >= fft_size ? (
-        fft_idx = 0;
+    // === [수정된 FFT 처리 (Overlap 적용)] ===
+    // 1. 들어오는 오디오를 원형 버퍼(audio_buf)에 계속 기록 (최근 4096개만 유지)
+    audio_buf[audio_idx] = in_mono;
+    audio_idx = (audio_idx + 1) % fft_size; 
+
+    // 2. 설정한 보폭(hop_size)만큼 찼을 때만 FFT 계산 실행!
+    hop_cnt += 1;
+    hop_cnt >= hop_size ? 
+    (
+        hop_cnt = 0; // 카운터 초기화
+
+        // 3. 원형 버퍼에서 '가장 오래된 과거'부터 '현재'까지 4096개를 순서대로 꺼내서 윈도우 씌우기
+        i = 0;
+        loop(fft_size,
+            // audio_idx는 항상 가장 오래된 데이터의 위치를 가리키고 있음
+            read_pos = (audio_idx + i) % fft_size;
+            fft_buf[i * 2]     = audio_buf[read_pos] * window[i]; // 실수부에 담기
+            fft_buf[i * 2 + 1] = 0;                               // 허수부는 0
+            i += 1;
+        );
+
+        // 4. FFT 연산 및 gmem 전송 (이 부분은 기존과 동일)
         memcpy(700000, fft_buf, fft_size * 2);
         fft(700000, fft_size);
         fft_permute(700000, fft_size);
+        
         k = 0;
-        loop(fft_size/2,
-            re = 700000[k*2]; im = 700000[k*2+1];
-            gmem[300000 + k] = sqrt(re*re + im*im);
+        loop(fft_size / 2,
+            re = 700000[k * 2]; 
+            im = 700000[k * 2 + 1];
+            gmem[300000 + k] = sqrt(re * re + im * im);
             k += 1;
         );
     );

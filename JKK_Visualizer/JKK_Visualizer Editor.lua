@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer Editor
 -- @description JKK_Visualizer Editor
 -- @author Junki Kim
--- @version 1.0.0
+-- @version 1.2.0
 -- @provides
 --     [nomain] JKK_Theme.lua
 --     [nomain] LOGO.png
@@ -20,7 +20,10 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
 
 -- Memory Address 
     options = reaper.gmem_attach('JKK_Visualizer_Mem')
-    local MEM_GAIN  = 2
+    local MEM_GAIN_GONIO    = 2
+    local MEM_GAIN_SYMBIOTE = 6
+    local MEM_GAIN_SCOPE    = 7
+    local MEM_GAIN_SPECTRUM = 8
     local MEM_BG    = 1000
     local MEM_LINE  = 1010
     local MEM_TEXT  = 1020
@@ -28,8 +31,8 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
     local MEM_MID   = 1040
     local MEM_PEAK  = 1050
     local MEM_FREZ  = 1060
-    local ui_order  = {1, 2, 3, 4, 5} 
-    local ui_active = {true, true, true, true, true}
+    local ui_order  = {1, 2, 3, 4, 5, 6}
+    local ui_active = {true, true, true, true, true, true}
 
 ----------------------------------------------------------
 -- UI Info Description
@@ -37,6 +40,10 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
     local widget_descriptions = {
         ["LOGO"]    = { "Sound Designer 김준기 (Junki Kim)", "junkikim.sound@gmail.com" },
         ["GAIN"]    = { "Signal Gain",      "Adjusts the visual sensitivity of the visualizer.\n비주얼라이저의 반응 감도를 조절합니다." },
+        ["GAIN_GONIO"]    = { "Gonio Gain",    "Adjusts the visual sensitivity of the Goniometer.\nGonio 모듈의 반응 감도를 조절합니다." },
+        ["GAIN_SYMBIOTE"] = { "Symbiote Gain", "Adjusts the visual sensitivity of the Symbiote.\nSymbiote 모듈의 반응 감도를 조절합니다." },
+        ["GAIN_SCOPE"]    = { "Scope Gain",    "Adjusts the visual sensitivity of the Scope.\nScope 모듈의 반응 감도를 조절합니다." },
+        ["GAIN_SPECTRUM"] = { "Spectrum Gain", "Adjusts the visual sensitivity of the Spectrum.\nSpectrum 모듈의 반응 감도를 조절합니다." },
         ["FONT"]    = { "Font Scale",       "Adjusts the size of all text at the same ratio.\n모든 텍스트의 크기를 동일한 비율로 조절합니다." },
         ["ATTACK"]  = { "Response Speed (Attack)", "Adjusts how quickly the visualizer reacts to signals.\n비주얼라이저가 신호에 반응하는 속도를 조절합니다." },
         ["RELEASE"] = { "Decay Speed (Release)", "Adjusts how quickly the visualizer fades out.\n비주얼라이저의 잔상이 사라지는 속도를 조절합니다." },
@@ -57,38 +64,31 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
 ----------------------------------------------------------
     local SECTION = "JKK_Visualizer"
 
-    -- [모든 설정을 ExtState에 저장]
     local function SaveAllSettings()
-        -- 1. 색상 저장 (메모리 주소 1101~1125 등 모든 색상 루프)
         for i = 1000, 1140 do
             local val = reaper.gmem_read(i)
             reaper.SetExtState(SECTION, "MEM_"..i, tostring(val), true)
         end
-        -- 2. 폰트 스케일 저장
         reaper.SetExtState(SECTION, "FontScale", tostring(reaper.gmem_read(1300)), true)
-        -- 3. 모듈 순서 저장
+        
         local order_str = ""
-        for i = 1, 5 do order_str = order_str .. ui_order[i] .. (i < 5 and "," or "") end
+        for i = 1, 6 do order_str = order_str .. ui_order[i] .. (i < 6 and "," or "") end
         reaper.SetExtState(SECTION, "ModuleOrder", order_str, true)
-        -- 4. 모듈 활성화 상태 저장
+        
         local active_str = ""
-        for i = 1, 5 do active_str = active_str .. (ui_active[i] and "1" or "0") .. (i < 5 and "," or "") end
+        for i = 1, 6 do active_str = active_str .. (ui_active[i] and "1" or "0") .. (i < 6 and "," or "") end
         reaper.SetExtState(SECTION, "ModuleActive", active_str, true)
     end
 
-    -- [저장된 설정 불러오기]
     local function LoadAllSettings()
-        -- 1. 색상 불러오기
         for i = 1000, 1140 do
             if reaper.HasExtState(SECTION, "MEM_"..i) then
                 reaper.gmem_write(i, tonumber(reaper.GetExtState(SECTION, "MEM_"..i)))
             end
         end
-        -- 2. 폰트 스케일
         if reaper.HasExtState(SECTION, "FontScale") then
             reaper.gmem_write(1300, tonumber(reaper.GetExtState(SECTION, "FontScale")))
         end
-        -- 3. 순서 불러오기
         if reaper.HasExtState(SECTION, "ModuleOrder") then
             local order_str = reaper.GetExtState(SECTION, "ModuleOrder")
             local idx = 1
@@ -98,19 +98,16 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                 idx = idx + 1
             end
         end
-        -- 4. [추가] 모듈 활성화 상태 불러오기
         if reaper.HasExtState(SECTION, "ModuleActive") then
             local active_str = reaper.GetExtState(SECTION, "ModuleActive")
             local idx = 1
             for val in string.gmatch(active_str, '([^,]+)') do
                 ui_active[idx] = (val == "1")
-                -- gmem 1151~1155에 상태 쓰기 (1=On, 0=Off)
                 reaper.gmem_write(1150 + idx, ui_active[idx] and 1 or 0)
                 idx = idx + 1
             end
         else
-            -- 저장된 값이 없으면 기본값(전부 켜짐)으로 gmem 초기화
-            for i = 1, 5 do reaper.gmem_write(1150 + i, 1) end
+            for i = 1, 6 do reaper.gmem_write(1150 + i, 1) end
         end
     end
     LoadAllSettings()
@@ -118,18 +115,14 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
 ----------------------------------------------------------
 -- Color Editor
 ----------------------------------------------------------
-    -- Defualt Colors
         local DEFAULTS = {
-            -- 1. UI
-            bg   = {030/255, 030/255, 030/255, 1.0},  -- 배경색 (어두운 회색)
-            line = {200/255, 200/255, 200/255, 0.3},  -- 그리드/라인 (반투명 흰색)
-            text = {180/255, 180/255, 180/255, 1.0},  -- 일반 텍스트 (흰색)
-
-            -- 2. Signal Level
-            zero = {006/255, 143/255, 195/255, 0.1},  -- Weak (약한 신호, 투명도 낮음)
-            mid  = {006/255, 143/255, 195/255, 0.8},  -- Mid  (중간 신호)
-            peak = {227/255, 219/255, 142/255, 1.0},  -- Peak (강한 신호, 황금색)
-            frez = {180/255, 180/255, 180/255, 1.0}   -- Peak Freeze
+            bg   = {030/255, 030/255, 030/255, 1.0}, 
+            line = {200/255, 200/255, 200/255, 0.3}, 
+            text = {180/255, 180/255, 180/255, 1.0}, 
+            zero = {006/255, 143/255, 195/255, 0.1}, 
+            mid  = {006/255, 143/255, 195/255, 0.8}, 
+            peak = {227/255, 219/255, 142/255, 1.0}, 
+            frez = {180/255, 180/255, 180/255, 1.0}  
         }
     function ColorEdit(ctx, label, mem_idx, desc_id)
         local r = reaper.gmem_read(mem_idx)
@@ -137,7 +130,6 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         local b = reaper.gmem_read(mem_idx + 2)
         local a = reaper.gmem_read(mem_idx + 3)
         
-        -- 초기 실행 시(값이 없으면) 기본값 로드
         if r == 0 and g == 0 and b == 0 and a == 0 then 
             ApplyDefaults()
             r = reaper.gmem_read(mem_idx)
@@ -152,7 +144,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                       reaper.ImGui_ColorEditFlags_AlphaPreviewHalf() |
                       reaper.ImGui_ColorEditFlags_AlphaBar()
 
-        reaper.ImGui_PushStyleVar(ctx, reaper.ImGui_StyleVar_FramePadding(), 6, 6) -- 숫자를 키우면 아이콘이 커집니다.
+        reaper.ImGui_PushStyleVar(ctx, reaper.ImGui_StyleVar_FramePadding(), 6, 6)
         reaper.ImGui_SetNextItemWidth(ctx, 30)
 
         local retval, new_packed_col = reaper.ImGui_ColorEdit4(ctx, label, packed_col, flags)
@@ -160,14 +152,10 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
 
         if retval then
             local nr, ng, nb, na = reaper.ImGui_ColorConvertU32ToDouble4(new_packed_col)
-            reaper.gmem_write(mem_idx, nr)
-                SaveAllSettings()
-            reaper.gmem_write(mem_idx + 1, ng)
-                SaveAllSettings()
-            reaper.gmem_write(mem_idx + 2, nb)
-                SaveAllSettings()
-            reaper.gmem_write(mem_idx + 3, na)
-                SaveAllSettings()
+            reaper.gmem_write(mem_idx, nr); SaveAllSettings()
+            reaper.gmem_write(mem_idx + 1, ng); SaveAllSettings()
+            reaper.gmem_write(mem_idx + 2, nb); SaveAllSettings()
+            reaper.gmem_write(mem_idx + 3, na); SaveAllSettings()
         end
         if desc_id and reaper.ImGui_IsItemHovered(ctx) then
             shared_info.hovered_id = desc_id
@@ -179,16 +167,11 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
 ----------------------------------------------------------
     function ApplyDefaults()
         local function write_col(mem, col)
-            reaper.gmem_write(mem,   col[1])
-                SaveAllSettings()
-            reaper.gmem_write(mem+1, col[2])
-                SaveAllSettings()
-            reaper.gmem_write(mem+2, col[3])
-                SaveAllSettings()
-            reaper.gmem_write(mem+3, col[4])
-                SaveAllSettings()
+            reaper.gmem_write(mem,   col[1]); SaveAllSettings()
+            reaper.gmem_write(mem+1, col[2]); SaveAllSettings()
+            reaper.gmem_write(mem+2, col[3]); SaveAllSettings()
+            reaper.gmem_write(mem+3, col[4]); SaveAllSettings()
         end
-
         write_col(MEM_BG,   DEFAULTS.bg)
         write_col(MEM_LINE, DEFAULTS.line)
         write_col(MEM_TEXT, DEFAULTS.text)
@@ -198,19 +181,17 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         write_col(MEM_FREZ, DEFAULTS.frez)
     end
 
-    -- 순서 읽어오기 함수
     function init_order_from_gmem()
         local has_data = false
-        for i = 1, 5 do
+        for i = 1, 6 do
             local val = reaper.gmem_read(1100 + i)
             if val > 0 then 
                 ui_order[i] = val 
                 has_data = true
             end
         end
-        
         if not has_data then
-            for i = 1, 5 do reaper.gmem_write(1100 + i, ui_order[i]) end
+            for i = 1, 6 do reaper.gmem_write(1100 + i, ui_order[i]) end
             SaveAllSettings()
         end
     end
@@ -225,9 +206,9 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         local textcol_gray = 0x808080FF
         local pushed_vars, pushed_cols = ApplyTheme(ctx)
         reaper.ImGui_PushFont(ctx, sans_font, 12)
-        reaper.ImGui_SetNextWindowSize(ctx, 530, 540, reaper.ImGui_Cond_Once())
+        reaper.ImGui_SetNextWindowSize(ctx, 530, 640, reaper.ImGui_Cond_Once())
 
-        local visible, open = reaper.ImGui_Begin(ctx, 'JKK_Visualizer Editor v1.0', true,
+        local visible, open = reaper.ImGui_Begin(ctx, 'JKK_Visualizer Editor v1.2', true,
             reaper.ImGui_WindowFlags_NoCollapse())
         reaper.ImGui_PopFont(ctx)
         if reaper.ImGui_IsKeyPressed(ctx, reaper.ImGui_Key_Escape()) then
@@ -236,7 +217,6 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         reaper.ImGui_PushFont(ctx, sans_font, 13)
         if visible then
             local active_desc = nil
-            -- Logo ========================================================
                 reaper.ImGui_Dummy(ctx, -5, 0)
                 reaper.ImGui_SameLine(ctx)
                 reaper.ImGui_Image(ctx, image_logo, 45, 45)
@@ -244,7 +224,6 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                         shared_info.hovered_id = "LOGO"
                     end
                 reaper.ImGui_SameLine(ctx)
-            -- Title ========================================================
                 reaper.ImGui_PushFont(ctx, font, 24)
                 reaper.ImGui_PushStyleColor(ctx, reaper.ImGui_Col_Text(), textcol_title)
                 local text = " "
@@ -252,7 +231,6 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                 reaper.ImGui_PopFont(ctx)
                 reaper.ImGui_PopStyleColor(ctx, 1)
                 reaper.ImGui_SameLine(ctx)
-            -- Info ========================================================
                 local INFO_LINE_SPACING = 12
                 local INFO_MAX_LINES    = 2
                 local INFO_AREA_HEIGHT  = (INFO_LINE_SPACING * INFO_MAX_LINES) + 5
@@ -268,7 +246,6 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                     local padding = 15
                     local spacing_adjust = -30
 
-                    -- Title
                     reaper.ImGui_PushFont(ctx, font, 13)
                     reaper.ImGui_PushStyleColor(ctx, reaper.ImGui_Col_Text(), textcol_title)
                     
@@ -281,7 +258,6 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
 
                     reaper.ImGui_SetCursorPosY(ctx, reaper.ImGui_GetCursorPosY(ctx) + spacing_adjust)
 
-                    -- Body
                     if body then
                         reaper.ImGui_PushFont(ctx, font, 11)
                         reaper.ImGui_PushStyleColor(ctx, reaper.ImGui_Col_Text(), textcol_gray)
@@ -301,21 +277,33 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                 reaper.ImGui_Spacing(ctx)
                 reaper.ImGui_SetCursorPosY(ctx, 85)
                 shared_info.hovered_id = nil
-            -- Visual Size ========================================================
+            -- Visual Size
                 reaper.ImGui_SeparatorText(ctx, 'Visual Size')
-                local current_gain = reaper.gmem_read(MEM_GAIN)
-                    local changed, new_gain = reaper.ImGui_SliderDouble(ctx, "Signal Gain", current_gain, 0.0, 1.0, "%.3f")
-                    if reaper.ImGui_IsItemClicked(ctx, 1) then 
-                        new_gain = 0.5 
-                        changed = true
-                    end
-                    if changed then
-                        reaper.gmem_write(MEM_GAIN, new_gain)
-                        SaveAllSettings()
-                    end
-                    if reaper.ImGui_IsItemHovered(ctx) then
-                        shared_info.hovered_id = "GAIN"
-                    end
+                -- 1. Gonio Gain
+                local g_gain = reaper.gmem_read(MEM_GAIN_GONIO)
+                local g_changed, g_new = reaper.ImGui_SliderDouble(ctx, "Gonio Gain", g_gain, 0.0, 1.0, "%.3f")
+                if g_changed then reaper.gmem_write(MEM_GAIN_GONIO, g_new) SaveAllSettings() end
+                if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "GAIN_GONIO" end
+
+                -- 2. Symbiote Gain
+                local sym_gain = reaper.gmem_read(MEM_GAIN_SYMBIOTE)
+                local s_changed, s_new = reaper.ImGui_SliderDouble(ctx, "Symbiote Gain", sym_gain, 0.0, 1.0, "%.3f")
+                if s_changed then reaper.gmem_write(MEM_GAIN_SYMBIOTE, s_new) SaveAllSettings() end
+                if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "GAIN_SYMBIOTE" end
+
+                -- 3. Scope Gain
+                local scp_gain = reaper.gmem_read(MEM_GAIN_SCOPE)
+                local scp_changed, scp_new = reaper.ImGui_SliderDouble(ctx, "Scope Gain", scp_gain, 0.0, 1.0, "%.3f")
+                if scp_changed then reaper.gmem_write(MEM_GAIN_SCOPE, scp_new) SaveAllSettings() end
+                if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "GAIN_SCOPE" end
+
+                -- 4. Spectrum Gain
+                local spec_gain = reaper.gmem_read(MEM_GAIN_SPECTRUM)
+                local sp_changed, sp_new = reaper.ImGui_SliderDouble(ctx, "Spectrum Gain", spec_gain, 0.0, 1.0, "%.3f")
+                if sp_changed then reaper.gmem_write(MEM_GAIN_SPECTRUM, sp_new) SaveAllSettings() end
+                if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "GAIN_SPECTRUM" end
+
+                reaper.ImGui_Spacing(ctx)
                 local font_scale = reaper.gmem_read(1300)
                     if font_scale <= 0 then font_scale = 1.0 end
                     local changed, new_scale = reaper.ImGui_SliderDouble(ctx, "Font Scale", font_scale, 0.5, 2.0, "%.2fx")
@@ -323,108 +311,83 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                         reaper.gmem_write(1300, new_scale)
                         SaveAllSettings()
                     end
-                    if reaper.ImGui_IsItemHovered(ctx) then
-                        shared_info.hovered_id = "FONT"
-                    end
+                    if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "FONT" end
                     reaper.ImGui_Spacing(ctx)
-            -- Signal Speed ========================================================
+            -- Signal Speed
                 -- Attack Slider
                     local current_att = reaper.gmem_read(4)
                     if current_att <= 0 then current_att = 1.0 end
-
                     local changed_att, new_att = reaper.ImGui_SliderDouble(ctx, "Response Speed", current_att, 0.1, 1.0, "%.2fx")
-
-                    -- [수정] changed -> changed_att 로 변경
                     if reaper.ImGui_IsItemClicked(ctx, 1) then 
                         new_att = 1.0
                         changed_att = true
                     end
-
                     if changed_att then
-                        reaper.gmem_write(4, new_att)
-                        SaveAllSettings()
+                        reaper.gmem_write(4, new_att); SaveAllSettings()
                     end
                     if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "ATTACK" end
 
-                    -- Release Slider
+                -- Release Slider
                     local current_rel = reaper.gmem_read(5)
                     if current_rel <= 0 then current_rel = 1.0 end
-
                     local changed_rel, new_rel = reaper.ImGui_SliderDouble(ctx, "Decay Speed", current_rel, 0.1, 1.0, "%.2fx")
-
-                    -- [수정] changed -> changed_rel 로 변경
                     if reaper.ImGui_IsItemClicked(ctx, 1) then 
                         new_rel = 1.0
                         changed_rel = true
                     end
-
                     if changed_rel then
-                        reaper.gmem_write(5, new_rel)
-                        SaveAllSettings()
+                        reaper.gmem_write(5, new_rel); SaveAllSettings()
                     end
                     if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "RELEASE" end
                     reaper.ImGui_Spacing(ctx)
 
-            -- Order ========================================================
-                local module_names = {[1]="   ▩ LUFS", [2]="   ▩ Gonio", [3]="   ▩ Symbiote", [4]="   ▩ Scope", [5]="   ▩ Spectrum"}
+            -- Order (폭포수 모듈 추가)
+                local module_names = {
+                    [1]="   ▩ LUFS", [2]="   ▩ Gonio", [3]="   ▩ Symbiote", 
+                    [4]="   ▩ Scope", [5]="   ▩ Spectrum", [6]="   ▩ Spectrogram"
+                }
 
                 reaper.ImGui_SeparatorText(ctx, "Module Order (Drag to Reorder)")
 
-                -- [드래그 앤 드롭 리스트 & 체크박스]
                 for i, module_id in ipairs(ui_order) do
-                    -- 1. [추가] 체크박스 그리기
-                    -- ui_active는 모듈 ID를 키로 사용합니다. (예: ui_active[1]은 LUFS의 상태)
                     local is_active = ui_active[module_id]
                     local rv, new_val = reaper.ImGui_Checkbox(ctx, "##act_"..i, is_active)
                     if rv then
                         ui_active[module_id] = new_val
-                        -- 변경 즉시 gmem 전송 및 저장
                         reaper.gmem_write(1150 + module_id, new_val and 1 or 0)
                         SaveAllSettings()
                     end
-                    
-                    -- 체크박스 옆에 텍스트가 오도록 줄바꿈 방지
                     reaper.ImGui_SameLine(ctx)
-
-                    -- 2. 아이템 표시 (Selectable)
-                    if reaper.ImGui_IsItemHovered(ctx) then
-                        shared_info.hovered_id = "ORDER"
-                    end
+                    if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "ORDER" end
                     
                     reaper.ImGui_PushID(ctx, i)
-                    -- 체크박스가 꺼져있으면 텍스트를 흐리게 표시 (선택사항)
                     if not ui_active[module_id] then reaper.ImGui_BeginDisabled(ctx) end
                     reaper.ImGui_Selectable(ctx, module_names[module_id], false)
                     if not ui_active[module_id] then reaper.ImGui_EndDisabled(ctx) end
                     reaper.ImGui_PopID(ctx)
 
-                    -- 3. 드래그 시작 (Drag Source)
                     if reaper.ImGui_BeginDragDropSource(ctx, reaper.ImGui_DragDropFlags_None()) then
                         reaper.ImGui_SetDragDropPayload(ctx, "DND_ORDER", tostring(i))
                         reaper.ImGui_Text(ctx, module_names[module_id])
                         reaper.ImGui_EndDragDropSource(ctx)
                     end
 
-                    -- 4. 드래그 놓기 (Drop Target)
                     if reaper.ImGui_BeginDragDropTarget(ctx) then
                         local retval, payload = reaper.ImGui_AcceptDragDropPayload(ctx, "DND_ORDER")
                         if retval then
                             local source_idx = tonumber(payload)
                             local target_idx = i
-                            
                             local item_to_move = table.remove(ui_order, source_idx)
                             table.insert(ui_order, target_idx, item_to_move)
-                            
-                            for k=1, 5 do reaper.gmem_write(1100 + k, ui_order[k]) end
-                            SaveAllSettings() -- 순서 변경 시 즉시 저장
+                            for k=1, 6 do reaper.gmem_write(1100 + k, ui_order[k]) end
+                            SaveAllSettings() 
                         end
                         reaper.ImGui_EndDragDropTarget(ctx)
                     end
                 end
                 reaper.ImGui_Spacing(ctx)
-            -- Color Theme ========================================================
+            -- Color Theme
                 reaper.ImGui_SeparatorText(ctx, 'Global Theme')
-                
                 ColorEdit(ctx, "Background", MEM_BG, "BG")
                 reaper.ImGui_SameLine(ctx)
                 ColorEdit(ctx, "Grid & Lines", MEM_LINE, "LINE")
@@ -433,7 +396,6 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                 
                 reaper.ImGui_Spacing(ctx)
                 reaper.ImGui_SeparatorText(ctx, 'Signal Colors')
-                
                 ColorEdit(ctx, "Weak (Zero)", MEM_ZERO, "ZERO")
                 reaper.ImGui_SameLine(ctx)
                 ColorEdit(ctx, "Normal (Mid)", MEM_MID, "MID")
@@ -444,13 +406,11 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                 
                 reaper.ImGui_Spacing(ctx)
                 reaper.ImGui_Spacing(ctx)
-            -- Reset ========================================================
+            -- Reset
                 if reaper.ImGui_Button(ctx, "Reset to Defualts", -1, 27) then
                     ApplyDefaults()
                 end
-                if reaper.ImGui_IsItemHovered(ctx) then
-                    shared_info.hovered_id = "RESET"
-                end
+                if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "RESET" end
             if reaper.ImGui_IsKeyPressed(ctx, reaper.ImGui_Key_Space()) then
                 reaper.Main_OnCommand(40044, 0)
             end
@@ -466,7 +426,4 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         end
     end
 
-
 loop()
-
-
