@@ -63,6 +63,13 @@ ReaImGui must be installed to use JKK_Visualizer.
 - Fixed sample rate indexing bug (Now shows full Nyquist range instead of 12kHz cap).
 ### v1.0.3 (Feb 23, 2026)
 - Smoother curves in low-end & clearer rendering in high-end.
+### v1.0.4 (Feb 27, 2026)
+- Fixed an issue where the goniometer's L/R orientation was reversed.
+### v1.0.5 (Mar 05, 2026)
+- Added support for Spacebar (Play/Stop) transport control within the visualizer window.
+### v1.2.0 (Apr 12, 2026, plz restart .jsfx)
+- Added Smooth Spectrogram Module.
+- Independent Module Gain Control: Sensitivity for Gonio, Symbiote, Scope, and Spectrum/Waterfall can now be adjusted individually within the editor.
 
 ---
 ## 🌊 About the Author
