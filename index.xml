@@ -121,6 +121,13 @@ the ReaPack websit
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Fixed sample rate indexing bug (Now shows full Nyquist range instead of 12kHz cap).\sa180\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 v1.0.3 (Feb 23, 2026)\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Smoother curves in low-end & clearer rendering in high-end.\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 v1.0.4 (Feb 27, 2026)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Fixed an issue where the goniometer's L/R orientation was reversed.\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 v1.0.5 (Mar 05, 2026)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Added support for Spacebar (Play/Stop) transport control within the visualizer window.\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 v1.2.0 (Apr 12, 2026, plz restart .jsfx)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Added Smooth Spectrogram Module.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Independent Module Gain Control: Sensitivity for Gonio, Symbiote, Scope, and Spectrum/Waterfall can now be adjusted individually within the editor.\sa180\par}
 {\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 \u55356 ?\u57098 ? About the Author\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Junki Kim Game Sound Designer Specializing in game audio implementation and REAPER workflow optimization.\par}
