@@ -1,5 +1,5 @@
 noindex: true
-version: 1.0
+version: 1.3
 author Junki Kim
 desc: JKK_Visualizer
 
@@ -15,11 +15,16 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
 // slider2:0.25<0,1,0.001>Spectrum Floor (Macro %)
 
 @init
-    // === [기존 초기화] ===
     slider5 = 0.25;
     idx = 0;
     buf_len = 100000;
     fft_size = 4096;
+
+    update_interval_ms = 20; 
+    hop_size = (update_interval_ms * srate / 1000)|0; 
+    hop_size = min(hop_size, fft_size);
+    hop_cnt = 0;
+
     fft_buf = 500000;
     window = 600000;
     fft_idx = 0;
@@ -35,8 +40,7 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
     decay_speed = 0.1;
 
     // === [LUFS 엔진 초기화 (Cockos Loudness Meter 기반)] ===
-    // 400ms(M), 3000ms(S) 윈도우 버퍼 크기 계산
-    LOUD_METER_UPDATE = 0.1; // 100ms 단위 업데이트
+    LOUD_METER_UPDATE = 0.1;
     m_win_cnt = 0.4 / LOUD_METER_UPDATE; // Momentary Window (400ms)
     s_win_cnt = 3.0 / LOUD_METER_UPDATE; // Short-term Window (3000ms)
 
@@ -77,13 +81,13 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
     
     // 윈도우 길이 (샘플 단위)
     win_len = (LOUD_METER_UPDATE * srate)|0;
-    i_win_len = 1 / (m_win_cnt * win_len); // M용 정규화 계수
-    i_win_len2 = 1 / (s_win_cnt * win_len); // S용 정규화 계수
+    i_win_len = 1 / (m_win_cnt * win_len);
+    i_win_len2 = 1 / (s_win_cnt * win_len);
 
     // FFT Overlap을 위한 변수 세팅
-    hop_size = 1024;  // 1024면 75% 겹침(4배 빠름). 512면 87.5% 겹침(8배 빠름)
+    hop_size = 1024; 
     hop_cnt = 0;
-    audio_buf = 900000; // 최근 4096개 원본 오디오를 뺑뺑이로 담아둘 새 원형 버퍼 번지
+    audio_buf = 900000;
     audio_idx = 0;
 
 @slider
@@ -95,14 +99,12 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
 
 @block
     gmem[1] = srate;
-    // UI 슬라이더 오토메이션 강제 동기화
     abs(gmem[2] - slider1) > 0.00001 ? ( slider1 = gmem[2]; slider_automate(slider1); );
     abs(gmem[6] - slider2) > 0.00001 ? ( slider2 = gmem[6]; slider_automate(slider3); );
     abs(gmem[7] - slider3) > 0.00001 ? ( slider3 = gmem[7]; slider_automate(slider2); );
     abs(gmem[8] - slider4) > 0.00001 ? ( slider4 = gmem[8]; slider_automate(slider4); );
     abs(gmem[3] - slider5) > 0.00001 ? ( slider5 = gmem[3]; slider_automate(slider5); );
     
-    // [리셋 체크] Lua에서 30번지에 1을 쓰면 리셋
     gmem[30] > 0 ? (
         // 1. 기존 Integrated 관련 변수 리셋
         lufs_i_sum = 0;
@@ -140,7 +142,6 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
     );
 
 @sample
-    // === [1. 기존 오디오 처리] ===
     in_l = spl0;
     in_r = spl1;
     in_mono = (in_l + in_r) * 0.5;
@@ -151,28 +152,27 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
     idx = (idx + 1) % buf_len;
     gmem[0] = idx;
 
-    // === [수정된 FFT 처리 (Overlap 적용)] ===
-    // 1. 들어오는 오디오를 원형 버퍼(audio_buf)에 계속 기록 (최근 4096개만 유지)
+    srate != last_sr ? (
+        hop_size = (update_interval_ms * srate / 1000)|0;
+        hop_size = min(hop_size, fft_size);
+        last_sr = srate;
+    );
+
     audio_buf[audio_idx] = in_mono;
     audio_idx = (audio_idx + 1) % fft_size; 
-
-    // 2. 설정한 보폭(hop_size)만큼 찼을 때만 FFT 계산 실행!
     hop_cnt += 1;
     hop_cnt >= hop_size ? 
     (
-        hop_cnt = 0; // 카운터 초기화
+        hop_cnt = 0;
 
-        // 3. 원형 버퍼에서 '가장 오래된 과거'부터 '현재'까지 4096개를 순서대로 꺼내서 윈도우 씌우기
         i = 0;
         loop(fft_size,
-            // audio_idx는 항상 가장 오래된 데이터의 위치를 가리키고 있음
             read_pos = (audio_idx + i) % fft_size;
-            fft_buf[i * 2]     = audio_buf[read_pos] * window[i]; // 실수부에 담기
-            fft_buf[i * 2 + 1] = 0;                               // 허수부는 0
+            fft_buf[i * 2]     = audio_buf[read_pos] * window[i];
+            fft_buf[i * 2 + 1] = 0;
             i += 1;
         );
 
-        // 4. FFT 연산 및 gmem 전송 (이 부분은 기존과 동일)
         memcpy(700000, fft_buf, fft_size * 2);
         fft(700000, fft_size);
         fft_permute(700000, fft_size);
@@ -185,10 +185,6 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
             k += 1;
         );
     );
-
-    // === [2. LUFS 계산 엔진] ===
-    // K-Weighting Filter (Mono Sum or Dual Mono Average)
-    // 여기서는 간단히 L/R 각각 필터링 후 합산
     
     // Left Filter
     l_s1 = f1b0*in_l + f1b1*f1p1_L + f1b2*f1p2_L - f1a1*f1y1_L - f1a2*f1y2_L;
@@ -228,12 +224,9 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
         lval = 0; 
         
         // --- [1. Momentary LUFS 계산 및 스무딩] ---
-        // 실제 값 계산
         real_m_db = (lufs_m_sum > 0) ? (-0.691 + log(lufs_m_sum) * 10 / log(10)) : -144;
         real_m_db > m_peak_hold ? m_peak_hold = real_m_db;
 
-        // [시각적 스무딩 적용]
-        // 실제 값이 더 크면 즉시 반영(Attack), 작으면 천천히 하락(Decay)
         real_m_db > last_m_visual ? (
             last_m_visual = real_m_db;
         ) : (
@@ -250,7 +243,7 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
         ) : (
             last_s_visual -= decay_speed;
         );
-        gmem[21] = last_s_visual; // 스무딩된 값 전송
+        gmem[21] = last_s_visual;
     );
 
 @gfx 120 30
