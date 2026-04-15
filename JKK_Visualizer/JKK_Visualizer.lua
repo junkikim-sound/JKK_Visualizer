@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 1.2.0
+-- @version 1.2.1
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -163,12 +163,16 @@ local ui_order = {1, 2, 3, 4, 6, 5}
     end
 
     function draw_gonio(x, y, w, h, gain)
-        local base_trail = 2000
+        local srate = reaper.gmem_read(1)
+        if srate <= 0 then srate = 44100 end
+        
+        local base_trail = 2000 * (srate / 44100) 
         local trail_len = math.floor(base_trail / (g_signal_release / 2))
+
         local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and
                           gfx.mouse_y >= y and gfx.mouse_y <= y + h)
         if is_hover then
-            trail_len = trail_len * 7
+            trail_len = trail_len * 3
         end
 
         local cx, cy = x + w * 0.5, y + h * 0.45
@@ -429,7 +433,11 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         local cy = y + h * 0.5
         local write_idx = reaper.gmem_read(0)
         
-        local step = (buf_len / w) * scope_speed 
+        local srate = reaper.gmem_read(1)
+        if srate <= 0 then srate = 44100 end
+        local scope_speed_scaled = scope_speed * (srate / 44100)
+        local step = (buf_len / w) * scope_speed_scaled
+
         local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
                       gfx.mouse_y >= y and gfx.mouse_y <= y + h)
         if is_hover then
@@ -509,8 +517,8 @@ local ui_order = {1, 2, 3, 4, 6, 5}
     end
 
     function draw_spectrum(x, y, w, h, ceil, floor)
-        local base_area_decay = 4.0 
-        local base_peak_decay = 3.0 
+        local base_area_decay = 2.0 
+        local base_peak_decay = 1.0 
         local area_decay_rate = base_area_decay * g_signal_release
         local peak_decay_rate = base_peak_decay * g_signal_release
         
