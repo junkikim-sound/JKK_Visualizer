@@ -21,7 +21,7 @@ local spec_offset = 0
 local g_signal_attack = 0.00001
 local g_signal_release = 0.00001
 
--- 데이터 버퍼 정보
+-- 데이터 버퍼 정보 --
 local buf_len = 100000
 local fft_size = 4096
 local fft_bins = 2048
