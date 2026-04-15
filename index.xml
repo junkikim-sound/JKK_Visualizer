@@ -55,10 +55,6 @@
         <source main="main">https://github.com/junkikim-sound/JKK_Visualizer/raw/947a01e061abcac9db1daa41f4037a82770dd316/JKK_Visualizer/JKK_Visualizer.lua</source>
         <source type="effect" file="JKK_Visualizer.jsfx">https://github.com/junkikim-sound/JKK_Visualizer/raw/947a01e061abcac9db1daa41f4037a82770dd316/JKK_Visualizer/JKK_Visualizer.jsfx</source>
       </version>
-      <version name="1.2.1" author="Junki Kim" time="2026-04-15T02:21:26Z">
-        <source main="main">https://github.com/junkikim-sound/JKK_Visualizer/raw/70b7a2562728255bd4a6c533a079ce4cb82a6bb4/JKK_Visualizer/JKK_Visualizer.lua</source>
-        <source type="effect" file="JKK_Visualizer.jsfx">https://github.com/junkikim-sound/JKK_Visualizer/raw/70b7a2562728255bd4a6c533a079ce4cb82a6bb4/JKK_Visualizer/JKK_Visualizer.jsfx</source>
-      </version>
     </reapack>
   </category>
   <metadata>
