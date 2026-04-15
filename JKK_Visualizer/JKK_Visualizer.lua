@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 1.2.1
+-- @version 1.2.2
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -21,7 +21,7 @@ local spec_offset = 0
 local g_signal_attack = 0.00001
 local g_signal_release = 0.00001
 
--- 데이터 버퍼 정보 --
+-- 데이터 버퍼 정보
 local buf_len = 100000
 local fft_size = 4096
 local fft_bins = 2048
@@ -440,10 +440,11 @@ local ui_order = {1, 2, 3, 4, 6, 5}
 
         local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
                       gfx.mouse_y >= y and gfx.mouse_y <= y + h)
+        
         if is_hover then
-            step = (buf_len / w) * (0.3)
+            step = (buf_len / w) * 0.3 * (srate / 44100)
         end
-        local scan_stride = math.max(1, math.floor(step / 8)) 
+        local scan_stride = 2 
 
         for m = 0, w - 1 do
             local start_pos = (write_idx - (w - m) * step)
@@ -710,6 +711,11 @@ local ui_order = {1, 2, 3, 4, 6, 5}
                           gfx.mouse_y >= y and gfx.mouse_y <= y + h)
         local is_frozen = is_hover and (gfx.mouse_cap & 1 == 1)
 
+        local current_scan_speed = w_scan_speed
+        if is_hover and not is_frozen then
+            current_scan_speed = math.max(1, math.floor(w_scan_speed * 0.25)) 
+        end
+
         if w ~= w_last_w or h ~= w_last_h then
             gfx.dest = waterfall_canvas_id
             gfx.setimgdim(waterfall_canvas_id, -1, -1)
@@ -766,10 +772,10 @@ local ui_order = {1, 2, 3, 4, 6, 5}
             end
 
             gfx.dest = waterfall_canvas_id
-            for s = 0, w_scan_speed - 1 do
+            for s = 0, current_scan_speed - 1 do
                 local current_idx = (w_cursor_idx + s) % RES_W
                 local screen_x = current_idx * block_w
-                local horiz_t = s / w_scan_speed
+                local horiz_t = s / current_scan_speed
                 
                 gfx.set(bg_r, bg_g, bg_b, 1)
                 gfx.rect(screen_x, 0, block_w + 1, h, 1)
@@ -810,7 +816,7 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         gfx.dest = -1
         gfx.set(1, 1, 1, 1)
         
-        local advance = is_frozen and 0 or w_scan_speed
+        local advance = is_frozen and 0 or current_scan_speed
         local split_x = (w_cursor_idx + advance) * block_w
         
         gfx.blit(waterfall_canvas_id, 1, 0, split_x, 0, w - split_x, h, x, y, w - split_x, h)
@@ -822,15 +828,14 @@ local ui_order = {1, 2, 3, 4, 6, 5}
             local norm_y = ((target_bin - min_bin) / bin_range) ^ (1 / scale_exponent)
             local line_y = y + (1 - norm_y) * h
             
-            -- 👇 선의 투명도(Alpha)를 30% 수준으로 확 낮춰서 가늘게 보이도록 수정
             gfx.set(line_r, line_g, line_b, line_a / 2) 
             gfx.line(x, line_y, x + w, line_y)
             
-            -- 텍스트는 원래 밝기 그대로 선명하게 유지
-            gfx.set(text_r, text_g, text_b, text_a / 2)
+            gfx.set(text_r, text_g, text_b, text_a / 3)
             gfx.x = x + 5; gfx.y = line_y - 12
             gfx.drawstr(label_text)
         end
+        
         draw_freq_line(10000, "10k")
         draw_freq_line(1000, "1k")
         draw_freq_line(100, "100")
@@ -866,12 +871,12 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         gfx.drawstr("Spectrogram")
 
         if is_frozen then
-            gfx.set(peak_r, peak_g, peak_b, peak_a)
+            gfx.set(227/255, 219/255, 142/255, 1.0)
             local fw, fh = gfx.measurestr("FREEZE")
             gfx.x, gfx.y = x + w - fw - 5, y + 5
             gfx.drawstr("FREEZE")
         else
-            w_cursor_idx = (w_cursor_idx + w_scan_speed) % RES_W
+            w_cursor_idx = (w_cursor_idx + current_scan_speed) % RES_W
         end
     end
 
