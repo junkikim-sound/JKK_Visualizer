@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 1.2.5
+-- @version 1.2.6
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -1088,15 +1088,21 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         end
 
         local current_time = reaper.time_precise()
-        local mom_val = reaper.gmem_read(20) -- 현재 오디오 볼륨(LUFS) 읽기
+        local mom_val = reaper.gmem_read(20)
         local is_mouse_in = (gfx.mouse_x >= 0 and gfx.mouse_x <= gfx.w and gfx.mouse_y >= 0 and gfx.mouse_y <= gfx.h)
         
-        -- 볼륨이 -100 LUFS 이상이거나, 창 위에 마우스를 올리면(UI 조작 중) 깨어남
         if mom_val > -100 or is_mouse_in then
             last_signal_time = current_time
         end
         
         g_is_standby = (current_time - last_signal_time) > 2.0
+
+        if g_is_standby and reaper.GetPlayState() == 0 then
+            
+            gfx.update()
+            reaper.defer(run)
+            return 
+        end
 
         gfx.set(bg_r, bg_g, bg_b, bg_a)
         gfx.rect(0, 0, gfx.w, gfx.h)
