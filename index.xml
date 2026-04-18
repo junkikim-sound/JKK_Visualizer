@@ -140,6 +140,9 @@ the ReaPack websit
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 v1.2.0 (Apr 12, 2026, plz restart .jsfx)\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Added Smooth Spectrogram Module.\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Independent Module Gain Control: Sensitivity for Gonio, Symbiote, Scope, and Spectrum/Waterfall can now be adjusted individually within the editor.\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 v1.2.5 (Apr 18, 2026)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Added Spectrogram FREEZE feature.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab CPU optimization.\sa180\par}
 {\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 \u55356 ?\u57098 ? About the Author\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Junki Kim Game Sound Designer Specializing in game audio implementation and REAPER workflow optimization.\par}
