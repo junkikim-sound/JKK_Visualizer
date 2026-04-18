@@ -70,6 +70,9 @@ ReaImGui must be installed to use JKK_Visualizer.
 ### v1.2.0 (Apr 12, 2026, plz restart .jsfx)
 - Added Smooth Spectrogram Module.
 - Independent Module Gain Control: Sensitivity for Gonio, Symbiote, Scope, and Spectrum/Waterfall can now be adjusted individually within the editor.
+### v1.2.5 (Apr 18, 2026)
+- Added Spectrogram FREEZE feature.
+- CPU optimization.
 
 ---
 ## 🌊 About the Author
