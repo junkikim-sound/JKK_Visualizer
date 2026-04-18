@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 1.2.2
+-- @version 1.2.5
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -525,7 +525,8 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         
         local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
                       gfx.mouse_y >= y and gfx.mouse_y <= y + h)
-        local is_frozen = is_hover and (gfx.mouse_cap & 1 == 1)
+        local is_user_frozen = is_hover and (gfx.mouse_cap & 1 == 1)
+        local is_frozen = is_user_frozen or g_is_standby
         if is_hover and not is_frozen then
             area_decay_rate = 1.0 * g_signal_release
         end
@@ -690,7 +691,7 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         gfx.x, gfx.y = x + 5, y + 5
         gfx.drawstr("Spectrum")
 
-        if is_frozen then
+        if is_user_frozen then
             gfx.set(227/255, 219/255, 142/255, 1.0)
             local fw, fh = gfx.measurestr("FREEZE")
             gfx.x, gfx.y = x + w - fw - 5, y + 5
@@ -698,18 +699,11 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         end
     end
 
-    function interpolate_cubic(p0, p1, p2, p3, t)
-        local a = (p3 - p2) - (p0 - p1)
-        local b = (p0 - p1) - a
-        local c = p2 - p0
-        local d = p1
-        return a*t^3 + b*t^2 + c*t + d
-    end
-
     function draw_spectrogram(x, y, w, h, gain, floor_db)
         local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
                           gfx.mouse_y >= y and gfx.mouse_y <= y + h)
-        local is_frozen = is_hover and (gfx.mouse_cap & 1 == 1)
+        local is_user_frozen = is_hover and (gfx.mouse_cap & 1 == 1)
+        local is_frozen = is_user_frozen or g_is_standby
 
         local current_scan_speed = w_scan_speed
         if is_hover and not is_frozen then
@@ -753,16 +747,12 @@ local ui_order = {1, 2, 3, 4, 6, 5}
                 local idx_float = min_bin + (bin_range * (norm_y ^ scale_exponent))
                 local i1 = math.floor(idx_float)
                 local t = idx_float - i1
-                local i0 = math.max(0, i1 - 1)
                 local i2 = math.min(num_bins - 1, i1 + 1)
-                local i3 = math.min(num_bins - 1, i1 + 2)
                 
-                local p0 = reaper.gmem_read(300000 + i0)
                 local p1 = reaper.gmem_read(300000 + i1)
                 local p2 = reaper.gmem_read(300000 + i2)
-                local p3 = reaper.gmem_read(300000 + i3)
                 
-                local raw = interpolate_cubic(p0, p1, p2, p3, t)
+                local raw = p1 + (p2 - p1) * t
                 if raw < 1e-10 then raw = 1e-10 end
                 col_data[y_px] = 20 * math.log(raw, 10)
             end
@@ -870,12 +860,12 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         gfx.x, gfx.y = x + 5, y + 5
         gfx.drawstr("Spectrogram")
 
-        if is_frozen then
-            gfx.set(227/255, 219/255, 142/255, 1.0)
+        if is_user_frozen then
+            gfx.set(peak_r, peak_g, peak_b, peak_a)
             local fw, fh = gfx.measurestr("FREEZE")
             gfx.x, gfx.y = x + w - fw - 5, y + 5
             gfx.drawstr("FREEZE")
-        else
+        elseif not is_frozen then
             w_cursor_idx = (w_cursor_idx + current_scan_speed) % RES_W
         end
     end
@@ -1043,12 +1033,26 @@ local ui_order = {1, 2, 3, 4, 6, 5}
 ----------------------------------------------------------
 -- UI Loops
 ----------------------------------------------------------
+    local last_signal_time = reaper.time_precise()
+    local g_is_standby = false
+    local target_fps = 45
+    local frame_interval = 1.0 / target_fps
+    local last_frame_time = reaper.time_precise()
+
     function run()
         local char = gfx.getchar()
         if char == 27 then return end 
         if char == 32 then
             reaper.Main_OnCommand(40044, 0) 
         end
+
+        local current_time = reaper.time_precise()
+        if (current_time - last_frame_time) < frame_interval then
+            reaper.defer(run)
+            return
+        end
+        last_frame_time = current_time
+
         update_settings_from_gmem()
 
         if gfx.mouse_cap == 2 then 
@@ -1082,6 +1086,17 @@ local ui_order = {1, 2, 3, 4, 6, 5}
                 reaper.gmem_write(mem, current_gain)
             end
         end
+
+        local current_time = reaper.time_precise()
+        local mom_val = reaper.gmem_read(20) -- 현재 오디오 볼륨(LUFS) 읽기
+        local is_mouse_in = (gfx.mouse_x >= 0 and gfx.mouse_x <= gfx.w and gfx.mouse_y >= 0 and gfx.mouse_y <= gfx.h)
+        
+        -- 볼륨이 -100 LUFS 이상이거나, 창 위에 마우스를 올리면(UI 조작 중) 깨어남
+        if mom_val > -100 or is_mouse_in then
+            last_signal_time = current_time
+        end
+        
+        g_is_standby = (current_time - last_signal_time) > 2.0
 
         gfx.set(bg_r, bg_g, bg_b, bg_a)
         gfx.rect(0, 0, gfx.w, gfx.h)
