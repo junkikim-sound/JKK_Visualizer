@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 1.2.6
+-- @version 1.2.7
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -431,16 +431,21 @@ local ui_order = {1, 2, 3, 4, 6, 5}
 
     function draw_scope(x, y, w, h, zoom)
         local cy = y + h * 0.5
-        local write_idx = reaper.gmem_read(0)
+        
+        local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
+                          gfx.mouse_y >= y and gfx.mouse_y <= y + h)
+        local is_user_frozen = is_hover and (gfx.mouse_cap & 1 == 1)
+        local is_frozen = is_user_frozen or g_is_standby
+
+        if not scope_last_idx then scope_last_idx = reaper.gmem_read(0) end
+        local write_idx = is_frozen and scope_last_idx or reaper.gmem_read(0)
+        if not is_frozen then scope_last_idx = write_idx end
         
         local srate = reaper.gmem_read(1)
         if srate <= 0 then srate = 44100 end
         local scope_speed_scaled = scope_speed * (srate / 44100)
         local step = (buf_len / w) * scope_speed_scaled
 
-        local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
-                      gfx.mouse_y >= y and gfx.mouse_y <= y + h)
-        
         if is_hover then
             step = (buf_len / w) * 0.3 * (srate / 44100)
         end
@@ -505,6 +510,13 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         gfx.set(line_r, line_g, line_b, line_a)
         gfx.x, gfx.y = x + 5, y + 5
         gfx.drawstr("Scope")
+
+        if is_user_frozen then
+            gfx.set(227/255, 219/255, 142/255, 1.0)
+            local fw, fh = gfx.measurestr("FREEZE")
+            gfx.x, gfx.y = x + w - fw - 5, y + 5
+            gfx.drawstr("FREEZE")
+        end
     end
 
     local function freq_to_note(freq)
@@ -861,7 +873,7 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         gfx.drawstr("Spectrogram")
 
         if is_user_frozen then
-            gfx.set(peak_r, peak_g, peak_b, peak_a)
+            gfx.set(227/255, 219/255, 142/255, 1.0)
             local fw, fh = gfx.measurestr("FREEZE")
             gfx.x, gfx.y = x + w - fw - 5, y + 5
             gfx.drawstr("FREEZE")
