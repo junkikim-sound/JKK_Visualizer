@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 1.2.7
+-- @version 1.2.8
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
@@ -1108,13 +1108,6 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         end
         
         g_is_standby = (current_time - last_signal_time) > 2.0
-
-        if g_is_standby and reaper.GetPlayState() == 0 then
-            
-            gfx.update()
-            reaper.defer(run)
-            return 
-        end
 
         gfx.set(bg_r, bg_g, bg_b, bg_a)
         gfx.rect(0, 0, gfx.w, gfx.h)
