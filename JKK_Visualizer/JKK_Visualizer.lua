@@ -1047,9 +1047,16 @@ local ui_order = {1, 2, 3, 4, 6, 5}
 ----------------------------------------------------------
     local last_signal_time = reaper.time_precise()
     local g_is_standby = false
-    local target_fps = 45
-    local frame_interval = 1.0 / target_fps
-    local last_frame_time = reaper.time_precise()
+    -- Redraw rate: ExtState TargetFps (effective fps, default 30 = every tick). defer() runs at ~30 Hz,
+    -- so we render once every N ticks (30->1, 15->2, 10->3). The ExtState is re-read about every 2 s.
+    local function read_render_every()
+        local fps = tonumber(reaper.GetExtState("JKK_Visualizer", "TargetFps")) or 30
+        local n = math.floor(30 / fps + 0.5)
+        if n < 1 then n = 1 elseif n > 6 then n = 6 end
+        return n
+    end
+    local render_every = read_render_every()
+    local tick_count = 0
 
     function run()
         local char = gfx.getchar()
@@ -1058,12 +1065,13 @@ local ui_order = {1, 2, 3, 4, 6, 5}
             reaper.Main_OnCommand(40044, 0) 
         end
 
-        local current_time = reaper.time_precise()
-        if (current_time - last_frame_time) < frame_interval then
+        tick_count = tick_count + 1
+        if tick_count % 60 == 0 then render_every = read_render_every() end
+        if tick_count % render_every ~= 0 then
             reaper.defer(run)
             return
         end
-        last_frame_time = current_time
+        local current_time = reaper.time_precise()
 
         update_settings_from_gmem()
 

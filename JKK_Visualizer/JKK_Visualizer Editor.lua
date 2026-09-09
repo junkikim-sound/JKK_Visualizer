@@ -45,6 +45,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         ["GAIN_SCOPE"]    = { "Scope Gain",    "Adjusts the visual sensitivity of the Scope.\nScope 모듈의 반응 감도를 조절합니다." },
         ["GAIN_SPECTRUM"] = { "Spectrum Gain", "Adjusts the visual sensitivity of the Spectrum.\nSpectrum 모듈의 반응 감도를 조절합니다." },
         ["FONT"]    = { "Font Scale",       "Adjusts the size of all text at the same ratio.\n모든 텍스트의 크기를 동일한 비율로 조절합니다." },
+        ["FPS"]     = { "Target FPS",       "Redraw rate of the visualizer. Lower = less CPU (30 / 15 / 10 / 7.5 / 6 / 5 fps). 15 fps is visibly less smooth." },
         ["ATTACK"]  = { "Response Speed (Attack)", "Adjusts how quickly the visualizer reacts to signals.\n비주얼라이저가 신호에 반응하는 속도를 조절합니다." },
         ["RELEASE"] = { "Decay Speed (Release)", "Adjusts how quickly the visualizer fades out.\n비주얼라이저의 잔상이 사라지는 속도를 조절합니다." },
         ["ORDER"]   = { "Module Order",     "Drag and drop items to change the display order of the visualizer modules.\n마우스로 항목을 드래그하여 비주얼라이저의 표시 순서를 변경합니다." },
@@ -226,7 +227,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         local textcol_gray = 0x808080FF
         local pushed_vars, pushed_cols = ApplyTheme(ctx)
         reaper.ImGui_PushFont(ctx, sans_font, 12)
-        reaper.ImGui_SetNextWindowSize(ctx, 530, 640, reaper.ImGui_Cond_Once())
+        reaper.ImGui_SetNextWindowSize(ctx, 530, 740, reaper.ImGui_Cond_Once())
 
         local visible, open = reaper.ImGui_Begin(ctx, 'JKK_Visualizer Editor v1.2', true,
             reaper.ImGui_WindowFlags_NoCollapse())
@@ -332,6 +333,16 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                         MarkDirty()
                     end
                     if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "FONT" end
+
+                -- Target FPS (effective redraw rate; the visualizer draws once every N defer ticks of ~30 Hz: 30/15/10/7.5/6/5)
+                    local cur_fps = tonumber(reaper.GetExtState(SECTION, "TargetFps")) or 30
+                    local fps_changed, fps_new = reaper.ImGui_SliderInt(ctx, "Target FPS", math.floor(cur_fps + 0.5), 5, 30)
+                    if fps_changed then
+                        local n = math.floor(30 / fps_new + 0.5); if n < 1 then n = 1 elseif n > 6 then n = 6 end
+                        pending_ext["TargetFps"] = tostring(math.floor(30 / n + 0.5))
+                        MarkDirty()
+                    end
+                    if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "FPS" end
 
                     reaper.ImGui_Spacing(ctx)
             -- Signal Speed
