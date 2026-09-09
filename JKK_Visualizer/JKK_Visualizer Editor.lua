@@ -45,6 +45,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         ["GAIN_SCOPE"]    = { "Scope Gain",    "Adjusts the visual sensitivity of the Scope.\nScope 모듈의 반응 감도를 조절합니다." },
         ["GAIN_SPECTRUM"] = { "Spectrum Gain", "Adjusts the visual sensitivity of the Spectrum.\nSpectrum 모듈의 반응 감도를 조절합니다." },
         ["FONT"]    = { "Font Scale",       "Adjusts the size of all text at the same ratio.\n모든 텍스트의 크기를 동일한 비율로 조절합니다." },
+        ["LUFSVAL"] = { "LUFS Value Size",  "Adjusts the size of the LUFS numbers (Momentary / Short-term) independently of Font Scale." },
         ["FPS"]     = { "Target FPS",       "Redraw rate of the visualizer. Lower = less CPU (30 / 15 / 10 / 7.5 / 6 / 5 fps). 15 fps is visibly less smooth." },
         ["PERFLITE"] = { "Low CPU Mode",    "Cheaper drawing: spectrum scanned per pixel, coarser goniometer / scope / Symbiote, and no redraw while idle." },
         ["ATTACK"]  = { "Response Speed (Attack)", "Adjusts how quickly the visualizer reacts to signals.\n비주얼라이저가 신호에 반응하는 속도를 조절합니다." },
@@ -83,6 +84,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
             SetExtIfChanged("MEM_"..i, tostring(reaper.gmem_read(i)))
         end
         SetExtIfChanged("FontScale", tostring(reaper.gmem_read(1300)))
+        SetExtIfChanged("LufsValScale", tostring(reaper.gmem_read(1301)))
 
         local order_str = ""
         for i = 1, 6 do order_str = order_str .. ui_order[i] .. (i < 6 and "," or "") end
@@ -110,6 +112,9 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         end
         if reaper.HasExtState(SECTION, "FontScale") then
             reaper.gmem_write(1300, tonumber(reaper.GetExtState(SECTION, "FontScale")))
+        end
+        if reaper.HasExtState(SECTION, "LufsValScale") then
+            reaper.gmem_write(1301, tonumber(reaper.GetExtState(SECTION, "LufsValScale")))
         end
         if reaper.HasExtState(SECTION, "ModuleOrder") then
             local order_str = reaper.GetExtState(SECTION, "ModuleOrder")
@@ -334,6 +339,16 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                         MarkDirty()
                     end
                     if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "FONT" end
+
+                -- LUFS Value Size
+                    local lufs_scale = reaper.gmem_read(1301)
+                    if lufs_scale <= 0 then lufs_scale = 1.0 end
+                    local lv_changed, lv_new = reaper.ImGui_SliderDouble(ctx, "LUFS Value Size", lufs_scale, 0.5, 2.0, "%.2fx")
+                    if lv_changed then
+                        reaper.gmem_write(1301, lv_new)
+                        MarkDirty()
+                    end
+                    if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "LUFSVAL" end
 
                 -- Target FPS (effective redraw rate; the visualizer draws once every N defer ticks of ~30 Hz: 30/15/10/7.5/6/5)
                     local cur_fps = tonumber(reaper.GetExtState(SECTION, "TargetFps")) or 30

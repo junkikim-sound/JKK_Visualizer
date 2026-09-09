@@ -34,9 +34,10 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
         i += 1;
     );
 
-    last_m_visual = -144; 
+    last_m_visual = -144;
     last_s_visual = -144;
     m_peak_hold = -144;
+    s_peak_hold = -144;
     decay_speed = 0.1;
 
     // === [LUFS 엔진 초기화 (Cockos Loudness Meter 기반)] ===
@@ -112,9 +113,11 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
         lufs_i_db = -144;
         
         // 2. 화면에 표시되는 Momentary, Short-term, Peak 시각값 리셋
-        last_m_visual = -144; 
+        last_m_visual = -144;
         last_s_visual = -144;
         m_peak_hold = -144;
+        s_peak_hold = -144;
+        gmem[23] = -144;
         
         // 3. 내부 누적 계산값 리셋
         lufs_m_sum = 0; 
@@ -238,12 +241,15 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
         // --- [2. Short-term LUFS 계산 및 스무딩] ---
         real_s_db = (lufs_s_sum > 0) ? (-0.691 + log(lufs_s_sum) * 10 / log(10)) : -144;
 
+        real_s_db > s_peak_hold ? s_peak_hold = real_s_db;
+
         real_s_db > last_s_visual ? (
             last_s_visual = real_s_db;
         ) : (
             last_s_visual -= decay_speed;
         );
         gmem[21] = last_s_visual;
+        gmem[23] = s_peak_hold;   // Short-term peak value
     );
 
 @gfx 120 30

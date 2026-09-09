@@ -33,6 +33,9 @@ local fft_size = 4096
 local fft_bins = 2048
 local ui_order = {1, 2, 3, 4, 6, 5}
 
+-- LUFS value size (synced with the Editor via gmem/ExtState)
+local g_lufs_val_scale = 1.0
+
 ----------------------------------------------------------
 -- UI Values Setting
 ----------------------------------------------------------
@@ -105,57 +108,84 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         local mom_val = reaper.gmem_read(20)
         local short_val = reaper.gmem_read(21)
         local mom_peak = reaper.gmem_read(22)
+        local short_peak = reaper.gmem_read(23)
 
-        local base_label_size = 15 
-        local base_val_size = 35   
-        local base_peak_size = 20  
+        local base_label_size = 17
+        local base_val_size = 35 * g_lufs_val_scale
+        local base_peak_size = 20 * g_lufs_val_scale
 
         gfx.set(bg_r, bg_g, bg_b, bg_a)
         gfx.rect(x, y, w, h, 1)
         
-        local cx = x + w * 0.5
-        local unit_h = h / 2 
-        gfx.setfont(1, "Arial", base_label_size * g_font_scale)
-
-        local m_py = y
-        gfx.set(text_r, text_g, text_b, text_a)
-        local m_lab = "MOMENTARY"
-        local lw, lh = gfx.measurestr(m_lab)
-        gfx.x, gfx.y = cx - lw * 0.5, m_py + unit_h * 0.15
-        gfx.drawstr(m_lab)
+        -- MOMENTARY / SHORT-TERM side by side as two columns
+        local unit_w = w / 2
+        local m_cx = x + unit_w * 0.5
+        local s_cx = x + unit_w * 1.5
 
         local m_str = (mom_val <= -100) and "- Inf" or string.format("%.1f", mom_val)
-        gfx.setfont(2, "Arial", base_val_size * g_font_scale, "b")
-        gfx.set(scp2_r, scp2_g, scp2_b, scp2_a)
-        local sw, sh = gfx.measurestr(m_str)
-        gfx.x, gfx.y = cx - sw * 0.5, m_py + unit_h * 0.35
-        gfx.drawstr(m_str)
-
-        gfx.setfont(1, "Arial", base_peak_size * g_font_scale, "b")
-        gfx.set(scp3_r, scp3_g, scp3_b, scp3_a )
-        local p_str = (mom_peak <= -100) and "- Inf" or string.format("%.1f", mom_peak)
-        local pw, ph = gfx.measurestr(p_str)
-        gfx.x, gfx.y = cx - pw * 0.5, m_py + unit_h * 0.80
-        gfx.drawstr(p_str)
-
-        local s_py = y + unit_h
-        gfx.set(line_r, line_g, line_b, line_a)
-        gfx.line(x + 10, s_py + 8, x + w - 10, s_py + 8) 
-
-        gfx.setfont(1, "Arial", base_label_size * g_font_scale) 
-        gfx.set(text_r, text_g, text_b, text_a)
-        local s_lab = "SHORT-TERM"
-        local slw, slh = gfx.measurestr(s_lab)
-        gfx.x, gfx.y = cx - slw * 0.5, s_py + unit_h * 0.25
-        gfx.drawstr(s_lab)
-
         local s_str = (short_val <= -100) and "- Inf" or string.format("%.1f", short_val)
-        gfx.setfont(2, "Arial", base_val_size * g_font_scale, "b")
+        local mp_str = (mom_peak <= -100) and "- Inf" or string.format("%.1f", mom_peak)
+        -- an older JSFX never writes gmem[23] (stays 0) -> show "- Inf"
+        local sp_str = (short_peak <= -100 or short_peak == 0) and "- Inf" or string.format("%.1f", short_peak)
+
+        -- Labels (top)
+        gfx.setfont(1, "Arial", base_label_size * g_font_scale)
+        gfx.set(text_r, text_g, text_b, text_a)
+        local lw, lab_h = gfx.measurestr("MOMENTARY")
+        local label_y = y + 6
+        gfx.x, gfx.y = m_cx - lw * 0.5, label_y
+        gfx.drawstr("MOMENTARY")
+        local slw = gfx.measurestr("SHORT-TERM")
+        gfx.x, gfx.y = s_cx - slw * 0.5, label_y
+        gfx.drawstr("SHORT-TERM")
+
+        -- Fit the value text as large as possible; the peak text is kept at <= 60% of the value size
+        -- (shrinking the peak frees height for the value, so this converges in a few passes)
+        local avail_top = label_y + lab_h + 2
+        local peak_size = base_peak_size * g_font_scale
+        local val_size, vh, peak_y
+        for pass = 1, 3 do
+            gfx.setfont(1, "Arial", peak_size, "b")
+            local _, peak_h = gfx.measurestr(mp_str)
+            peak_y = y + h - peak_h - 6
+            local avail_h = peak_y - 4 - avail_top
+            val_size = base_val_size * g_font_scale
+            while true do
+                gfx.setfont(2, "Arial", val_size, "b")
+                local mw2, mh2 = gfx.measurestr(m_str)
+                local sw2 = gfx.measurestr(s_str)
+                vh = mh2
+                if val_size <= 8 or (mh2 <= avail_h and math.max(mw2, sw2) <= unit_w - 10) then break end
+                val_size = val_size - 1
+            end
+            local max_peak = math.max(8, val_size * 0.6)
+            if peak_size > max_peak then peak_size = max_peak else break end
+        end
+        local avail_h = peak_y - 4 - avail_top
+        local val_y = avail_top + math.max(0, (avail_h - vh) * 0.5)
+
         gfx.set(scp2_r, scp2_g, scp2_b, scp2_a)
-        local ssw, ssh = gfx.measurestr(s_str)
-        gfx.x, gfx.y = cx - ssw * 0.5, s_py + unit_h * 0.45
+        local mw = gfx.measurestr(m_str)
+        gfx.x, gfx.y = m_cx - mw * 0.5, val_y
+        gfx.drawstr(m_str)
+        local sw = gfx.measurestr(s_str)
+        gfx.x, gfx.y = s_cx - sw * 0.5, val_y
         gfx.drawstr(s_str)
-    
+
+        -- Peak values, both columns
+        gfx.setfont(1, "Arial", peak_size, "b")
+        gfx.set(scp3_r, scp3_g, scp3_b, scp3_a )
+        local mpw = gfx.measurestr(mp_str)
+        gfx.x, gfx.y = m_cx - mpw * 0.5, peak_y
+        gfx.drawstr(mp_str)
+        local spw = gfx.measurestr(sp_str)
+        gfx.x, gfx.y = s_cx - spw * 0.5, peak_y
+        gfx.drawstr(sp_str)
+
+        -- Center divider
+        gfx.set(line_r, line_g, line_b, line_a)
+        gfx.line(x + unit_w, y + 12, x + unit_w, y + h - 12)
+
         gfx.setfont(1, "Arial", base_title_size * g_font_scale)
 
         if gfx.mouse_cap == 1 then
@@ -269,10 +299,11 @@ local ui_order = {1, 2, 3, 4, 6, 5}
 
         phase_smooth = phase_smooth + (current_phase - phase_smooth) * 0.1            
 
+        -- Phase bar: match the guide width and align to the bottom edge
         local bar_h = 4
-        local bar_w = w * 0.6
+        local bar_w = math.min(w * 0.6, guide_size * 2)
         local bar_x = x + (w - bar_w) * 0.5
-        local bar_y = y + h - 15 
+        local bar_y = y + h - bar_h - 8
 
         gfx.set(line_r, line_g, line_b, line_a)
         gfx.rect(bar_x, bar_y, bar_w, bar_h, 0)
@@ -919,7 +950,12 @@ local ui_order = {1, 2, 3, 4, 6, 5}
             local val = tonumber(reaper.GetExtState(SECTION, "FontScale"))
             reaper.gmem_write(1300, val)
         end
-        
+
+        if reaper.HasExtState(SECTION, "LufsValScale") then
+            local val = tonumber(reaper.GetExtState(SECTION, "LufsValScale"))
+            if val then reaper.gmem_write(1301, val) end
+        end
+
         if reaper.HasExtState(SECTION, "ModuleOrder") then
             local order_str = reaper.GetExtState(SECTION, "ModuleOrder")
             local idx = 1
@@ -949,10 +985,11 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         reaper.gmem_write(7, 0.5) 
         reaper.gmem_write(8, 0.5) 
         reaper.gmem_write(9, 0.5) -- Waterfall Default
-        reaper.gmem_write(1300, 1.0) 
-        reaper.gmem_write(4, 1.0) 
+        reaper.gmem_write(1300, 1.0)
+        reaper.gmem_write(1301, 1.0)
+        reaper.gmem_write(4, 1.0)
         reaper.gmem_write(5, 1.0)
-        
+
         for i=1, 6 do reaper.gmem_write(1100 + i, i) end
     end
 
@@ -967,6 +1004,9 @@ local ui_order = {1, 2, 3, 4, 6, 5}
             local rel = reaper.gmem_read(5)
             if att > 0 then g_signal_attack = att else g_signal_attack = 1.0 end
             if rel > 0 then g_signal_release = rel else g_signal_release = 1.0 end
+
+            local lufs_scale = reaper.gmem_read(1301)
+            g_lufs_val_scale = (lufs_scale > 0) and lufs_scale or 1.0
 
         if reaper.gmem_read(1100) > 0 then
             reaper.gmem_write(1100, 0)
@@ -1050,6 +1090,11 @@ local ui_order = {1, 2, 3, 4, 6, 5}
             end
         else
             for i=1, 6 do reaper.gmem_write(1150 + i, 1) end
+        end
+
+        if reaper.HasExtState(SECTION, "LufsValScale") then
+            local val = tonumber(reaper.GetExtState(SECTION, "LufsValScale"))
+            if val then reaper.gmem_write(1301, val) end
         end
     end
     Initialize_System()
