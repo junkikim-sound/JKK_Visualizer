@@ -33,7 +33,8 @@ local fft_size = 4096
 local fft_bins = 2048
 local ui_order = {1, 2, 3, 4, 6, 5}
 
--- LUFS value size (synced with the Editor via gmem/ExtState)
+-- Display font and LUFS value size (synced with the Editor via gmem/ExtState)
+local g_font_name = "Arial"
 local g_lufs_val_scale = 1.0
 
 ----------------------------------------------------------
@@ -129,7 +130,7 @@ local g_lufs_val_scale = 1.0
         local sp_str = (short_peak <= -100 or short_peak == 0) and "- Inf" or string.format("%.1f", short_peak)
 
         -- Labels (top)
-        gfx.setfont(1, "Arial", base_label_size * g_font_scale)
+        gfx.setfont(1, g_font_name, base_label_size * g_font_scale)
         gfx.set(text_r, text_g, text_b, text_a)
         local lw, lab_h = gfx.measurestr("MOMENTARY")
         local label_y = y + 6
@@ -145,13 +146,13 @@ local g_lufs_val_scale = 1.0
         local peak_size = base_peak_size * g_font_scale
         local val_size, vh, peak_y
         for pass = 1, 3 do
-            gfx.setfont(1, "Arial", peak_size, "b")
+            gfx.setfont(1, g_font_name, peak_size, "b")
             local _, peak_h = gfx.measurestr(mp_str)
             peak_y = y + h - peak_h - 6
             local avail_h = peak_y - 4 - avail_top
             val_size = base_val_size * g_font_scale
             while true do
-                gfx.setfont(2, "Arial", val_size, "b")
+                gfx.setfont(2, g_font_name, val_size, "b")
                 local mw2, mh2 = gfx.measurestr(m_str)
                 local sw2 = gfx.measurestr(s_str)
                 vh = mh2
@@ -173,7 +174,7 @@ local g_lufs_val_scale = 1.0
         gfx.drawstr(s_str)
 
         -- Peak values, both columns
-        gfx.setfont(1, "Arial", peak_size, "b")
+        gfx.setfont(1, g_font_name, peak_size, "b")
         gfx.set(scp3_r, scp3_g, scp3_b, scp3_a )
         local mpw = gfx.measurestr(mp_str)
         gfx.x, gfx.y = m_cx - mpw * 0.5, peak_y
@@ -186,7 +187,7 @@ local g_lufs_val_scale = 1.0
         gfx.set(line_r, line_g, line_b, line_a)
         gfx.line(x + unit_w, y + 12, x + unit_w, y + h - 12)
 
-        gfx.setfont(1, "Arial", base_title_size * g_font_scale)
+        gfx.setfont(1, g_font_name, base_title_size * g_font_scale)
 
         if gfx.mouse_cap == 1 then
             if gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
@@ -319,7 +320,7 @@ local g_lufs_val_scale = 1.0
 
         gfx.rect(indicator_x - 1, bar_y - 2, 3, bar_h + 4, 1)
 
-        gfx.setfont(1, "Arial", (base_title_size - 4) * g_font_scale) 
+        gfx.setfont(1, g_font_name, (base_title_size - 4) * g_font_scale) 
         local label_padding = 5 
 
         local tw_minus, th_minus = gfx.measurestr("-1")
@@ -333,7 +334,7 @@ local g_lufs_val_scale = 1.0
         gfx.drawstr("+1")
 
         gfx.set(line_r, line_g, line_b, line_a)
-        gfx.setfont(1, "Arial", base_title_size * g_font_scale)
+        gfx.setfont(1, g_font_name, base_title_size * g_font_scale)
         gfx.x, gfx.y = x + 5, y + 5
         gfx.drawstr("Gonio")
     end
@@ -719,7 +720,7 @@ local g_lufs_val_scale = 1.0
             local note = freq_to_note(hz)
             local info_text = string.format("%.0f Hz (%s)", hz, note)
             
-            gfx.setfont(1, "Arial", (base_title_size) * g_font_scale)
+            gfx.setfont(1, g_font_name, (base_title_size) * g_font_scale)
             local tw, th = gfx.measurestr(info_text)
             local tx, ty = gfx.mouse_x + 10, gfx.mouse_y - 20
             
@@ -739,7 +740,7 @@ local g_lufs_val_scale = 1.0
             gfx.set(line_r, line_g, line_b, 0.3)
             gfx.line(gfx.mouse_x, y, gfx.mouse_x, y + h)
             
-            gfx.setfont(1, "Arial", base_title_size * g_font_scale)
+            gfx.setfont(1, g_font_name, base_title_size * g_font_scale)
         end
 
         gfx.set(line_r, line_g, line_b, line_a)
@@ -892,7 +893,7 @@ local g_lufs_val_scale = 1.0
             local note = freq_to_note(hz)
             local info_text = string.format("%.0f Hz (%s)", hz, note)
             
-            gfx.setfont(1, "Arial", base_title_size * g_font_scale)
+            gfx.setfont(1, g_font_name, base_title_size * g_font_scale)
             local tw, th = gfx.measurestr(info_text)
             local tx, ty = gfx.mouse_x + 10, gfx.mouse_y - 20
             if tx + tw > gfx.w then tx = gfx.mouse_x - tw - 10 end
@@ -1007,6 +1008,8 @@ local g_lufs_val_scale = 1.0
 
             local lufs_scale = reaper.gmem_read(1301)
             g_lufs_val_scale = (lufs_scale > 0) and lufs_scale or 1.0
+            local fn = reaper.GetExtState(SECTION, "FontName")
+            g_font_name = (fn ~= "") and fn or "Arial"
 
         if reaper.gmem_read(1100) > 0 then
             reaper.gmem_write(1100, 0)
