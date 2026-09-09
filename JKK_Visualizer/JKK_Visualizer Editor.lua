@@ -46,6 +46,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         ["GAIN_SPECTRUM"] = { "Spectrum Gain", "Adjusts the visual sensitivity of the Spectrum.\nSpectrum 모듈의 반응 감도를 조절합니다." },
         ["FONT"]    = { "Font Scale",       "Adjusts the size of all text at the same ratio.\n모든 텍스트의 크기를 동일한 비율로 조절합니다." },
         ["FPS"]     = { "Target FPS",       "Redraw rate of the visualizer. Lower = less CPU (30 / 15 / 10 / 7.5 / 6 / 5 fps). 15 fps is visibly less smooth." },
+        ["PERFLITE"] = { "Low CPU Mode",    "Cheaper drawing: spectrum scanned per pixel, coarser goniometer / scope / Symbiote, and no redraw while idle." },
         ["ATTACK"]  = { "Response Speed (Attack)", "Adjusts how quickly the visualizer reacts to signals.\n비주얼라이저가 신호에 반응하는 속도를 조절합니다." },
         ["RELEASE"] = { "Decay Speed (Release)", "Adjusts how quickly the visualizer fades out.\n비주얼라이저의 잔상이 사라지는 속도를 조절합니다." },
         ["ORDER"]   = { "Module Order",     "Drag and drop items to change the display order of the visualizer modules.\n마우스로 항목을 드래그하여 비주얼라이저의 표시 순서를 변경합니다." },
@@ -343,6 +344,15 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                         MarkDirty()
                     end
                     if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "FPS" end
+
+                -- Low CPU Mode (PerfLite)
+                    local perf_lite = (reaper.GetExtState(SECTION, "PerfLite") == "1")
+                    local pl_changed, pl_new = reaper.ImGui_Checkbox(ctx, "Low CPU Mode", perf_lite)
+                    if pl_changed then
+                        pending_ext["PerfLite"] = pl_new and "1" or "0"
+                        MarkDirty()
+                    end
+                    if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "PERFLITE" end
 
                     reaper.ImGui_Spacing(ctx)
             -- Signal Speed
