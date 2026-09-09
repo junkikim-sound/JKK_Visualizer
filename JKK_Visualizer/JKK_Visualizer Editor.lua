@@ -432,6 +432,12 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
 
                 reaper.ImGui_SeparatorText(ctx, "Module Order (Drag to Reorder)")
 
+                -- Pick up reorders made by dragging inside the visualizer window
+                for i = 1, 6 do
+                    local v = reaper.gmem_read(1100 + i)
+                    if v >= 1 and v <= 6 then ui_order[i] = v end
+                end
+
                 for i, module_id in ipairs(ui_order) do
                     local is_active = ui_active[module_id]
                     local rv, new_val = reaper.ImGui_Checkbox(ctx, "##act_"..i, is_active)

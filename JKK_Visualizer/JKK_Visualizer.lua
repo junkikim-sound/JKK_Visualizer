@@ -16,7 +16,68 @@ local function read_perf_lite() PERF_LITE = (reaper.GetExtState("JKK_Visualizer"
 
 local win_w, win_h = 800, 150
 local saved_dock = tonumber(reaper.GetExtState("JKK_Visualizer", "DockState")) or 0
+local layout_mode = tonumber(reaper.GetExtState("JKK_Visualizer", "VerticalLayout")) or 0 -- 0: Horizontal, 1: Vertical
 gfx.init("JKK_Visualizer", win_w, win_h, saved_dock)
+
+-- Dock position memory: remember the home docker's screen position (0=bottom/1=left/2=top/3=right/4=floating)
+-- together with its index, so the window returns to its home docker even when a screenset change
+-- swaps the index <-> position mapping.
+local desired_dock_pos = tonumber(reaper.GetExtState("JKK_Visualizer", "DockPos")) or -1
+local desired_dock_idx = tonumber(reaper.GetExtState("JKK_Visualizer", "DockIdx")) or -1
+local last_dock_check = 0
+local last_user_mouse = 0
+
+local function find_docker_with_pos(pos, prefer_idx)
+    -- Only the remembered docker index is considered; other dockers are not searched
+    -- (with several dockers at the same position the window could end up merged into the wrong one).
+    if prefer_idx and prefer_idx >= 0 and reaper.DockGetPosition(prefer_idx) == pos then
+        return prefer_idx
+    end
+    return -1
+end
+
+local function remember_dock_state()
+    local cur = gfx.dock(-1)
+    if cur > 0 then
+        desired_dock_idx = math.floor(cur / 256)
+        desired_dock_pos = reaper.DockGetPosition(desired_dock_idx)
+    else
+        desired_dock_pos = -1
+    end
+    reaper.SetExtState("JKK_Visualizer", "DockPos", tostring(desired_dock_pos), true)
+    reaper.SetExtState("JKK_Visualizer", "DockIdx", tostring(desired_dock_idx), true)
+end
+
+local function enforce_dock_pos()
+    if desired_dock_pos < 0 or desired_dock_idx < 0 then return end
+    local cur = gfx.dock(-1)
+    local cur_idx = (cur > 0) and math.floor(cur / 256) or -1
+    -- Already in the home docker: nothing to do
+    if cur_idx == desired_dock_idx then return end
+    local home_pos = reaper.DockGetPosition(desired_dock_idx)
+    -- Only re-dock if the home docker still has its remembered position
+    -- (if the position itself changed, leave the window alone)
+    if home_pos == desired_dock_pos then
+        gfx.dock(desired_dock_idx * 256 + 1)
+    end
+end
+
+local function dock_guard()
+    local now = reaper.time_precise()
+    if gfx.mouse_cap % 2 == 1 then last_user_mouse = now end
+    if now - last_dock_check < 1.0 then return end
+    last_dock_check = now
+    -- Do not intervene within 3 s of a mouse drag (avoid fighting the user).
+    -- The home is never re-learned automatically; it only changes via right-click "Set current dock as home".
+    if now - last_user_mouse < 3.0 then return end
+    enforce_dock_pos()
+end
+
+if desired_dock_pos < 0 then
+    if gfx.dock(-1) > 0 then remember_dock_state() end
+else
+    enforce_dock_pos()
+end
 
 -- 사용자 설정 범위
 local g_gain_min, g_gain_max            = 0.0,  2.0
@@ -33,9 +94,19 @@ local fft_size = 4096
 local fft_bins = 2048
 local ui_order = {1, 2, 3, 4, 6, 5}
 
--- Display font and LUFS value size (synced with the Editor via gmem/ExtState)
+-- Display font, LUFS value size and module size ratios (synced with the Editor via gmem/ExtState)
 local g_font_name = "Arial"
 local g_lufs_val_scale = 1.0
+local module_ratios = {[1]=0.10, [2]=0.12, [3]=0.12, [4]=0.12, [5]=0.39, [6]=0.15}
+local default_ratios = {0.10, 0.12, 0.12, 0.12, 0.39, 0.15}
+
+-- Drag state inside the visualizer window (border resize / module reorder)
+local drag_mode = nil          -- "resize" / "arm_reorder" / "reorder"
+local drag_resize_k = nil
+local drag_src_k = nil
+local drag_start_x, drag_start_y = 0, 0
+local mouse_was_down = false
+g_ui_drag = false
 
 ----------------------------------------------------------
 -- UI Values Setting
@@ -189,9 +260,9 @@ local g_lufs_val_scale = 1.0
 
         gfx.setfont(1, g_font_name, base_title_size * g_font_scale)
 
-        if gfx.mouse_cap == 1 then
-            if gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
-               gfx.mouse_y >= y and gfx.mouse_y <= y + h then
+        if gfx.mouse_cap == 1 and not g_ui_drag then
+            if gfx.mouse_x >= x and gfx.mouse_x <= x + w and
+               gfx.mouse_y >= y + 24 and gfx.mouse_y <= y + h then
                 reaper.gmem_write(30, 1) 
                 gfx.set(1, 1, 1, 0.15)
                 gfx.rect(x, y, w, h, 1)
@@ -474,7 +545,7 @@ local g_lufs_val_scale = 1.0
         
         local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
                           gfx.mouse_y >= y and gfx.mouse_y <= y + h)
-        local is_user_frozen = is_hover and (gfx.mouse_cap & 1 == 1)
+        local is_user_frozen = is_hover and (gfx.mouse_cap & 1 == 1) and not g_ui_drag
         local is_frozen = is_user_frozen or g_is_standby
 
         if not scope_last_idx then scope_last_idx = reaper.gmem_read(0) end
@@ -577,7 +648,7 @@ local g_lufs_val_scale = 1.0
         
         local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
                       gfx.mouse_y >= y and gfx.mouse_y <= y + h)
-        local is_user_frozen = is_hover and (gfx.mouse_cap & 1 == 1)
+        local is_user_frozen = is_hover and (gfx.mouse_cap & 1 == 1) and not g_ui_drag
         local is_frozen = is_user_frozen or g_is_standby
         if is_hover and not is_frozen then
             area_decay_rate = 1.0 * g_signal_release
@@ -758,7 +829,7 @@ local g_lufs_val_scale = 1.0
     function draw_spectrogram(x, y, w, h, gain, floor_db)
         local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
                           gfx.mouse_y >= y and gfx.mouse_y <= y + h)
-        local is_user_frozen = is_hover and (gfx.mouse_cap & 1 == 1)
+        local is_user_frozen = is_hover and (gfx.mouse_cap & 1 == 1) and not g_ui_drag
         local is_frozen = is_user_frozen or g_is_standby
 
         local current_scan_speed = w_scan_speed
@@ -957,6 +1028,15 @@ local g_lufs_val_scale = 1.0
             if val then reaper.gmem_write(1301, val) end
         end
 
+        if reaper.HasExtState(SECTION, "ModuleRatios") then
+            local idx = 1
+            for val in string.gmatch(reaper.GetExtState(SECTION, "ModuleRatios"), '([^,]+)') do
+                local n = tonumber(val)
+                if n and n > 0 and idx <= 6 then reaper.gmem_write(1200 + idx, n) end
+                idx = idx + 1
+            end
+        end
+
         if reaper.HasExtState(SECTION, "ModuleOrder") then
             local order_str = reaper.GetExtState(SECTION, "ModuleOrder")
             local idx = 1
@@ -992,6 +1072,7 @@ local g_lufs_val_scale = 1.0
         reaper.gmem_write(5, 1.0)
 
         for i=1, 6 do reaper.gmem_write(1100 + i, i) end
+        for i=1, 6 do reaper.gmem_write(1200 + i, default_ratios[i]) end
     end
 
     function update_settings_from_gmem()
@@ -1008,6 +1089,10 @@ local g_lufs_val_scale = 1.0
 
             local lufs_scale = reaper.gmem_read(1301)
             g_lufs_val_scale = (lufs_scale > 0) and lufs_scale or 1.0
+            for i = 1, 6 do
+                local rv = reaper.gmem_read(1200 + i)
+                if rv > 0.001 then module_ratios[i] = rv end
+            end
             local fn = reaper.GetExtState(SECTION, "FontName")
             g_font_name = (fn ~= "") and fn or "Arial"
 
@@ -1095,6 +1180,17 @@ local g_lufs_val_scale = 1.0
             for i=1, 6 do reaper.gmem_write(1150 + i, 1) end
         end
 
+        if reaper.HasExtState(SECTION, "ModuleRatios") then
+            local idx = 1
+            for val in string.gmatch(reaper.GetExtState(SECTION, "ModuleRatios"), '([^,]+)') do
+                local n = tonumber(val)
+                if n and n > 0 and idx <= 6 then reaper.gmem_write(1200 + idx, n) end
+                idx = idx + 1
+            end
+        else
+            for i=1, 6 do reaper.gmem_write(1200 + i, default_ratios[i]) end
+        end
+
         if reaper.HasExtState(SECTION, "LufsValScale") then
             local val = tonumber(reaper.GetExtState(SECTION, "LufsValScale"))
             if val then reaper.gmem_write(1301, val) end
@@ -1135,6 +1231,7 @@ local g_lufs_val_scale = 1.0
         local current_time = reaper.time_precise()
 
         update_settings_from_gmem()
+        dock_guard()
 
         if gfx.mouse_cap == 2 then 
             gfx.x, gfx.y = gfx.mouse_x, gfx.mouse_y
@@ -1143,12 +1240,24 @@ local g_lufs_val_scale = 1.0
             local is_docked = current_dock_state > 0
             
             local menu_str = (is_docked and "!" or "") .. "Dock to Docker|"
+            menu_str = menu_str .. (layout_mode == 1 and "!" or "") .. "Vertical Layout|"
+            menu_str = menu_str .. "Set current dock as home|"
             menu_str = menu_str .. "#For editing theme, run 'JKK_Visualizer Editor' from Action List"
             
             local selection = gfx.showmenu(menu_str)
             
             if selection == 1 then
-                if is_docked then gfx.dock(0) else gfx.dock(513) end
+                if is_docked then
+                    gfx.dock(0)
+                else
+                    local target = find_docker_with_pos((desired_dock_pos >= 0) and desired_dock_pos or 2, desired_dock_idx)
+                    gfx.dock((target >= 0) and (target * 256 + 1) or 513)
+                end
+                remember_dock_state()
+            elseif selection == 2 then
+                layout_mode = 1 - layout_mode
+            elseif selection == 3 then
+                remember_dock_state()
             end
         end
 
@@ -1181,7 +1290,7 @@ local g_lufs_val_scale = 1.0
         -- While in standby keep the last frame and skip drawing (resumes on window size/dock change or mouse activity)
         local wnd_sig = gfx.w * 7919 + gfx.h * 31 + gfx.dock(-1)
         if PERF_LITE and g_is_standby and standby_frames >= 2 and wnd_sig == standby_sig
-           and not is_mouse_in and gfx.mouse_cap == 0 then
+           and not is_mouse_in and gfx.mouse_cap == 0 and drag_mode == nil then
             reaper.defer(run)
             return
         end
@@ -1191,86 +1300,248 @@ local g_lufs_val_scale = 1.0
         gfx.set(bg_r, bg_g, bg_b, bg_a)
         gfx.rect(0, 0, gfx.w, gfx.h)
 
-        -- 6개 모듈의 기본 가로 비율
-        local module_widths = {
-            [1] = 0.10, [2] = 0.12, [3] = 0.12, [4] = 0.12, [5] = 0.39, [6] = 0.15
-        }
+        local vert = (layout_mode == 1)
+        local BORDER_HIT = 5   -- hit width for border drag (px)
+        local HEADER_H = 24    -- header height that starts a reorder drag (px)
+        local MIN_PX = 40      -- minimum module size (px)
 
-        local total_active_ratio = 0
-        local active_count = 0
-        
-        for i = 1, 6 do
-            local mod_id = ui_order[i]
-            if reaper.gmem_read(1150 + mod_id) == 1 then
-                total_active_ratio = total_active_ratio + module_widths[mod_id]
-                active_count = active_count + 1
+        -- Layout: compute every module rectangle before drawing
+        local function compute_layout()
+            local total_ratio = 0
+            local active_count = 0
+            for i = 1, 6 do
+                local mod_id = ui_order[i]
+                if reaper.gmem_read(1150 + mod_id) == 1 then
+                    total_ratio = total_ratio + module_ratios[mod_id]
+                    active_count = active_count + 1
+                end
+            end
+            if total_ratio == 0 then total_ratio = 1 end
+
+            local rects = {}
+            local cur = 0
+            local drawn = 0
+            for i = 1, 6 do
+                local mod_id = ui_order[i]
+                if reaper.gmem_read(1150 + mod_id) == 1 then
+                    drawn = drawn + 1
+                    local ratio = module_ratios[mod_id] / total_ratio
+                    local x, y, w, h
+                    if vert then
+                        x, y, w = 0, cur, gfx.w
+                        h = math.floor(gfx.h * ratio)
+                        if drawn == active_count then h = gfx.h - cur end
+                        cur = cur + h
+                    else
+                        x, y, h = cur, 0, gfx.h
+                        w = math.floor(gfx.w * ratio)
+                        if drawn == active_count then w = gfx.w - cur end
+                        cur = cur + w
+                    end
+                    rects[drawn] = {order_pos = i, mod_id = mod_id, x = x, y = y, w = w, h = h}
+                end
+            end
+            return rects
+        end
+
+        local rects = compute_layout()
+
+        local mx, my = gfx.mouse_x, gfx.mouse_y
+        local mouse_down = (gfx.mouse_cap & 1) == 1
+        local in_window = (mx >= 0 and mx <= gfx.w and my >= 0 and my <= gfx.h)
+
+        -- Hover test for borders / headers (borders take priority)
+        local hover_border = nil
+        local hover_header = nil
+        if in_window then
+            for k = 1, #rects - 1 do
+                local bpos = vert and rects[k+1].y or rects[k+1].x
+                local mpos = vert and my or mx
+                if math.abs(mpos - bpos) <= BORDER_HIT then
+                    hover_border = k
+                    break
+                end
+            end
+            if not hover_border then
+                for k = 1, #rects do
+                    local r = rects[k]
+                    if mx >= r.x and mx < r.x + r.w and my >= r.y and my < r.y + HEADER_H then
+                        hover_header = k
+                        break
+                    end
+                end
             end
         end
 
-        if total_active_ratio == 0 then total_active_ratio = 1 end
-
-        local current_x = 0
-        local drawn_count = 0
-        local s2 = reaper.gmem_read(3) 
-
-        for i = 1, 6 do
-            local mod_id = ui_order[i]
-            local is_active = (reaper.gmem_read(1150 + mod_id) == 1)
-
-            if is_active then
-                drawn_count = drawn_count + 1
-                
-                local ratio = module_widths[mod_id] / total_active_ratio
-                local w = math.floor(gfx.w * ratio)
-                if drawn_count == active_count then w = gfx.w - current_x end
-
-                if wheel_val ~= 0 and gfx.mouse_y >= 30 and gfx.mouse_x >= current_x and gfx.mouse_x <= current_x + w and gfx.mouse_y <= gfx.h then
-                    local target_gmem = nil
-                    if mod_id == 2 then target_gmem = 2 
-                    elseif mod_id == 3 then target_gmem = 6 
-                    elseif mod_id == 4 then target_gmem = 7 
-                    elseif mod_id == 5 then target_gmem = 8 
-                    elseif mod_id == 6 then target_gmem = 9
-                    end
-
-                    if target_gmem then
-                        local current_gain = reaper.gmem_read(target_gmem)
-                        local sensitivity = 0.02
-                        local change = (wheel_val / 120) * sensitivity 
-                        if math.abs(change) < 0.01 then change = (wheel_val > 0) and 0.02 or -0.02 end
-                        
-                        current_gain = math.max(0.0, math.min(1.0, current_gain + change))
-                        reaper.gmem_write(target_gmem, current_gain)
-                    end
-                end
-
-                local mod_raw_gain = 0.5
-                if mod_id == 2 then mod_raw_gain = reaper.gmem_read(2)
-                elseif mod_id == 3 then mod_raw_gain = reaper.gmem_read(6)
-                elseif mod_id == 4 then mod_raw_gain = reaper.gmem_read(7)
-                elseif mod_id == 5 then mod_raw_gain = reaper.gmem_read(8)
-                elseif mod_id == 6 then mod_raw_gain = reaper.gmem_read(9)
-                end
-
-                local specific_gain = g_gain_min + (g_gain_max - g_gain_min) * mod_raw_gain
-                local specific_zoom = s_zoom_min + (s_zoom_max - s_zoom_min) * mod_raw_gain
-                local specific_ceil = spec_ceil_min + (spec_ceil_max - spec_ceil_min) * mod_raw_gain
-                local floor = spec_floor_min + (spec_floor_max - spec_floor_min) * s2
- 
-                if mod_id == 1 then draw_lufs(current_x, 0, w, gfx.h)
-                elseif mod_id == 2 then draw_gonio(current_x, 0, w, gfx.h, specific_gain)
-                elseif mod_id == 3 then draw_symbiote(current_x, 0, w, gfx.h, specific_gain)
-                elseif mod_id == 4 then draw_scope(current_x, 0, w, gfx.h, specific_zoom)
-                elseif mod_id == 5 then draw_spectrum(current_x, 0, w, gfx.h, specific_ceil, floor)
-                elseif mod_id == 6 then draw_spectrogram(current_x, 0, w, gfx.h, mod_raw_gain, floor)
-                end
-                
-                if drawn_count == 1 then gfx.set(bg_r, bg_g, bg_b, bg_a) else gfx.set(line_r, line_g, line_b, line_a) end
-                gfx.line(current_x, 0, current_x, gfx.h)
-                current_x = current_x + w
+        -- Drag state transitions
+        if mouse_down and not mouse_was_down then
+            if hover_border then
+                drag_mode = "resize"
+                drag_resize_k = hover_border
+            elseif hover_header then
+                drag_mode = "arm_reorder"
+                drag_src_k = hover_header
+                drag_start_x, drag_start_y = mx, my
+            end
+        elseif mouse_down and drag_mode == "arm_reorder" then
+            if math.abs(mx - drag_start_x) + math.abs(my - drag_start_y) > 6 then
+                drag_mode = "reorder"
             end
         end
-        
+
+        -- Resizing: redistribute the ratio between the two adjacent modules
+        if drag_mode == "resize" and mouse_down then
+            local k = drag_resize_k
+            local r1, r2 = rects[k], rects[k+1]
+            if r1 and r2 then
+                local span = vert and (r1.h + r2.h) or (r1.w + r2.w)
+                if span > MIN_PX * 2 then
+                    local origin = vert and r1.y or r1.x
+                    local mpos = vert and my or mx
+                    local new1 = math.max(MIN_PX, math.min(span - MIN_PX, mpos - origin))
+                    local combined = module_ratios[r1.mod_id] + module_ratios[r2.mod_id]
+                    module_ratios[r1.mod_id] = combined * (new1 / span)
+                    module_ratios[r2.mod_id] = combined - module_ratios[r1.mod_id]
+                    reaper.gmem_write(1200 + r1.mod_id, module_ratios[r1.mod_id])
+                    reaper.gmem_write(1200 + r2.mod_id, module_ratios[r2.mod_id])
+                    rects = compute_layout()
+                end
+            end
+        end
+
+        -- Button released: commit the reorder / save the ratios
+        if not mouse_down and mouse_was_down then
+            if drag_mode == "reorder" then
+                local target_k = nil
+                for k = 1, #rects do
+                    local r = rects[k]
+                    if mx >= r.x and mx < r.x + r.w and my >= r.y and my < r.y + r.h then
+                        target_k = k
+                        break
+                    end
+                end
+                if target_k and drag_src_k and target_k ~= drag_src_k and rects[drag_src_k] then
+                    local item = table.remove(ui_order, rects[drag_src_k].order_pos)
+                    table.insert(ui_order, rects[target_k].order_pos, item)
+                    for k = 1, 6 do reaper.gmem_write(1100 + k, ui_order[k]) end
+                    reaper.SetExtState("JKK_Visualizer", "ModuleOrder", table.concat(ui_order, ","), true)
+                    rects = compute_layout()
+                end
+            elseif drag_mode == "resize" then
+                local t = {}
+                for i = 1, 6 do t[i] = string.format("%.4f", module_ratios[i]) end
+                reaper.SetExtState("JKK_Visualizer", "ModuleRatios", table.concat(t, ","), true)
+            end
+            drag_mode = nil
+        end
+        mouse_was_down = mouse_down
+        g_ui_drag = (drag_mode ~= nil)
+
+        -- Draw the modules
+        local s2 = reaper.gmem_read(3)
+
+        for k = 1, #rects do
+            local r = rects[k]
+            local mod_id, x, y, w, h = r.mod_id, r.x, r.y, r.w, r.h
+
+            if wheel_val ~= 0 and my >= y + 30 and mx >= x and mx <= x + w and my <= y + h then
+                local target_gmem = nil
+                if mod_id == 2 then target_gmem = 2
+                elseif mod_id == 3 then target_gmem = 6
+                elseif mod_id == 4 then target_gmem = 7
+                elseif mod_id == 5 then target_gmem = 8
+                elseif mod_id == 6 then target_gmem = 9
+                end
+
+                if target_gmem then
+                    local current_gain = reaper.gmem_read(target_gmem)
+                    local sensitivity = 0.02
+                    local change = (wheel_val / 120) * sensitivity
+                    if math.abs(change) < 0.01 then change = (wheel_val > 0) and 0.02 or -0.02 end
+
+                    current_gain = math.max(0.0, math.min(1.0, current_gain + change))
+                    reaper.gmem_write(target_gmem, current_gain)
+                end
+            end
+
+            local mod_raw_gain = 0.5
+            if mod_id == 2 then mod_raw_gain = reaper.gmem_read(2)
+            elseif mod_id == 3 then mod_raw_gain = reaper.gmem_read(6)
+            elseif mod_id == 4 then mod_raw_gain = reaper.gmem_read(7)
+            elseif mod_id == 5 then mod_raw_gain = reaper.gmem_read(8)
+            elseif mod_id == 6 then mod_raw_gain = reaper.gmem_read(9)
+            end
+
+            local specific_gain = g_gain_min + (g_gain_max - g_gain_min) * mod_raw_gain
+            local specific_zoom = s_zoom_min + (s_zoom_max - s_zoom_min) * mod_raw_gain
+            local specific_ceil = spec_ceil_min + (spec_ceil_max - spec_ceil_min) * mod_raw_gain
+            local floor = spec_floor_min + (spec_floor_max - spec_floor_min) * s2
+
+            if mod_id == 1 then draw_lufs(x, y, w, h)
+            elseif mod_id == 2 then draw_gonio(x, y, w, h, specific_gain)
+            elseif mod_id == 3 then draw_symbiote(x, y, w, h, specific_gain)
+            elseif mod_id == 4 then draw_scope(x, y, w, h, specific_zoom)
+            elseif mod_id == 5 then draw_spectrum(x, y, w, h, specific_ceil, floor)
+            elseif mod_id == 6 then draw_spectrogram(x, y, w, h, mod_raw_gain, floor)
+            end
+
+            if k > 1 then
+                gfx.set(line_r, line_g, line_b, line_a)
+                if vert then
+                    gfx.line(0, y, gfx.w, y)
+                else
+                    gfx.line(x, 0, x, gfx.h)
+                end
+            end
+        end
+
+        -- Drag overlays
+        if drag_mode == "reorder" then
+            gfx.setcursor(32646, "")
+            for k = 1, #rects do
+                local r = rects[k]
+                if k ~= drag_src_k and mx >= r.x and mx < r.x + r.w and my >= r.y and my < r.y + r.h then
+                    gfx.set(1, 1, 1, 0.08)
+                    gfx.rect(r.x, r.y, r.w, r.h, 1)
+                    gfx.set(1, 1, 1, 0.5)
+                    gfx.rect(r.x, r.y, r.w - 1, r.h - 1, 0)
+                end
+            end
+            local sr = rects[drag_src_k]
+            if sr then
+                gfx.set(0, 0, 0, 0.35)
+                gfx.rect(sr.x, sr.y, sr.w, sr.h, 1)
+                local module_names = {"LUFS", "Gonio", "Symbiote", "Scope", "Spectrum", "Spectrogram"}
+                local label = module_names[sr.mod_id] or "?"
+                gfx.setfont(1, g_font_name, base_title_size * g_font_scale)
+                local tw, th = gfx.measurestr(label)
+                local bx, by = mx + 12, my - th - 12
+                gfx.set(bg_r, bg_g, bg_b, 0.9)
+                gfx.rect(bx - 6, by - 4, tw + 12, th + 8, 1)
+                gfx.set(1, 1, 1, 0.9)
+                gfx.rect(bx - 6, by - 4, tw + 12, th + 8, 0)
+                gfx.x, gfx.y = bx, by
+                gfx.drawstr(label)
+            end
+        elseif hover_border or drag_mode == "resize" then
+            gfx.setcursor(vert and 32645 or 32644, "")
+            local k = (drag_mode == "resize") and drag_resize_k or hover_border
+            local r2 = rects[k + 1]
+            if r2 then
+                gfx.set(1, 1, 1, 0.25)
+                if vert then
+                    gfx.rect(0, r2.y - 1, gfx.w, 3, 1)
+                else
+                    gfx.rect(r2.x - 1, 0, 3, gfx.h, 1)
+                end
+            end
+        elseif hover_header then
+            gfx.setcursor(32646, "")
+            local r = rects[hover_header]
+            gfx.set(1, 1, 1, 0.06)
+            gfx.rect(r.x, r.y, r.w, HEADER_H, 1)
+        end
+
         gfx.update()
         reaper.defer(run)
     end
@@ -1278,6 +1549,7 @@ local g_lufs_val_scale = 1.0
     local function exit_cleanup()
         local current_dock = gfx.dock(-1)
         reaper.SetExtState("JKK_Visualizer", "DockState", tostring(current_dock), true)
+        reaper.SetExtState("JKK_Visualizer", "VerticalLayout", tostring(layout_mode), true)
     end
 
 reaper.atexit(exit_cleanup)
