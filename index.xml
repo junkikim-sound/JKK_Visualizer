@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="JKK_Visualizer" commit="2983991241f397d0874b3c1c2e853669fb24b31b">
+<index version="1" name="JKK_Visualizer" commit="b42c34a319887bba96e732d26b816cb3e7684b0f">
   <category name="JKK_Visualizer">
     <reapack name="JKK_Visualizer Editor.lua" type="script" desc="JKK_Visualizer Editor">
       <version name="0.9.3" author="Junki Kim" time="2026-01-19T03:06:38Z">
@@ -16,6 +16,11 @@
         <source main="main">https://github.com/junkikim-sound/JKK_Visualizer/raw/947a01e061abcac9db1daa41f4037a82770dd316/JKK_Visualizer/JKK_Visualizer%20Editor.lua</source>
         <source file="JKK_Theme.lua">https://github.com/junkikim-sound/JKK_Visualizer/raw/947a01e061abcac9db1daa41f4037a82770dd316/JKK_Visualizer/JKK_Theme.lua</source>
         <source file="LOGO.png">https://github.com/junkikim-sound/JKK_Visualizer/raw/947a01e061abcac9db1daa41f4037a82770dd316/JKK_Visualizer/LOGO.png</source>
+      </version>
+      <version name="1.3.0" author="Junki Kim" time="2026-09-26T13:10:42Z">
+        <source main="main">https://github.com/junkikim-sound/JKK_Visualizer/raw/effcbc506e8dae9a1ea13cfb6788870dbf1a1bd4/JKK_Visualizer/JKK_Visualizer%20Editor.lua</source>
+        <source file="JKK_Theme.lua">https://github.com/junkikim-sound/JKK_Visualizer/raw/effcbc506e8dae9a1ea13cfb6788870dbf1a1bd4/JKK_Visualizer/JKK_Theme.lua</source>
+        <source file="LOGO.png">https://github.com/junkikim-sound/JKK_Visualizer/raw/effcbc506e8dae9a1ea13cfb6788870dbf1a1bd4/JKK_Visualizer/LOGO.png</source>
       </version>
     </reapack>
     <reapack name="JKK_Visualizer.lua" type="script" desc="JKK_Visualizer">
@@ -78,6 +83,10 @@
       <version name="1.2.8" author="Junki Kim" time="2026-05-08T04:37:35Z">
         <source main="main">https://github.com/junkikim-sound/JKK_Visualizer/raw/2983991241f397d0874b3c1c2e853669fb24b31b/JKK_Visualizer/JKK_Visualizer.lua</source>
         <source type="effect" file="JKK_Visualizer.jsfx">https://github.com/junkikim-sound/JKK_Visualizer/raw/2983991241f397d0874b3c1c2e853669fb24b31b/JKK_Visualizer/JKK_Visualizer.jsfx</source>
+      </version>
+      <version name="1.5.0" author="Junki Kim" time="2026-09-26T13:10:42Z">
+        <source main="main">https://github.com/junkikim-sound/JKK_Visualizer/raw/effcbc506e8dae9a1ea13cfb6788870dbf1a1bd4/JKK_Visualizer/JKK_Visualizer.lua</source>
+        <source type="effect" file="JKK_Visualizer.jsfx">https://github.com/junkikim-sound/JKK_Visualizer/raw/effcbc506e8dae9a1ea13cfb6788870dbf1a1bd4/JKK_Visualizer/JKK_Visualizer.jsfx</source>
       </version>
     </reapack>
   </category>
