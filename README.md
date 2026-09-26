@@ -43,7 +43,8 @@ ReaImGui must be installed to use JKK_Visualizer.
 
 ---
 ## 🚀 2. Introduction
-![Screen Recording 2026-01-17 at 16 08 18_3](https://github.com/user-attachments/assets/908ef485-3651-493e-9ec7-62b69f6dda90)
+<img width="1280" height="720" alt="sdfsdfsdfsdf37_1_1" src="https://github.com/user-attachments/assets/df68aac2-985f-4de5-a8d3-5fa6b47da96d" />
+
 ### Key Features
 - **Multi-Module Interface**: Monitor LUFS, Goniometer, Symbiote, Scope, and Spectrum modules simultaneously on a single screen. Click the window to reset.
 - **Dynamic Symbiote**: A unique visualizer that evolves based on low-frequency responses, allowing you to "feel" the sound texture.
@@ -73,6 +74,13 @@ ReaImGui must be installed to use JKK_Visualizer.
 ### v1.2.6 (Apr 18, 2026)
 - Added Spectrogram FREEZE feature.
 - CPU optimization.
+### v1.5.0 (Sep 26, 2026, contributed by [tobokegao](https://github.com/tobokegao))
+- Performance
+   - Editor save optimization, Target FPS setting, Low CPU Mode
+- LUFS & Font
+   - Two-column Momentary and Short-term LUFS separation, LUFS value size control, Goniometer improvements
+- Layout & Dock
+   - Vertical layout addition, drag-to-resize and drag-to-reorder modules, dock position memory
 
 ---
 ## 🌊 About the Author
