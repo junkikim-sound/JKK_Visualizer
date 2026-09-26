@@ -2,7 +2,7 @@
 -- @title JKK_Visualizer Editor
 -- @description JKK_Visualizer Editor
 -- @author Junki Kim
--- @version 1.2.0
+-- @version 1.3.0
 -- @provides
 --     [nomain] JKK_Theme.lua
 --     [nomain] LOGO.png
@@ -45,10 +45,10 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         ["GAIN_SCOPE"]    = { "Scope Gain",    "Adjusts the visual sensitivity of the Scope.\nScope 모듈의 반응 감도를 조절합니다." },
         ["GAIN_SPECTRUM"] = { "Spectrum Gain", "Adjusts the visual sensitivity of the Spectrum.\nSpectrum 모듈의 반응 감도를 조절합니다." },
         ["FONT"]    = { "Font Scale",       "Adjusts the size of all text at the same ratio.\n모든 텍스트의 크기를 동일한 비율로 조절합니다." },
-        ["LUFSVAL"] = { "LUFS Value Size",  "Adjusts the size of the LUFS numbers (Momentary / Short-term) independently of Font Scale." },
-        ["FPS"]     = { "Target FPS",       "Redraw rate of the visualizer. Lower = less CPU (30 / 15 / 10 / 7.5 / 6 / 5 fps). 15 fps is visibly less smooth." },
-        ["PERFLITE"] = { "Low CPU Mode",    "Cheaper drawing: spectrum scanned per pixel, coarser goniometer / scope / Symbiote, and no redraw while idle." },
-        ["FONTNAME"] = { "Display Font",    "Font used inside the visualizer window (preset list or type any installed font name)." },
+        ["LUFSVAL"] = { "LUFS Value Size",  "Adjusts the size of the LUFS numbers\nLUFS Value 부분의 폰트 사이즈를 조절합니다." },
+        ["FPS"]     = { "Target FPS",       "Redraw rate of the visualizer.\n표시할 FPS를 조절합니다." },
+        ["PERFLITE"] = { "Low CPU Mode",    "Cheaper drawing: spectrum scanned per pixel,\ncoarser goniometer / scope / Symbiote, and no redraw while idle." },
+        ["FONTNAME"] = { "Display Font",    "Font used inside the visualizer window \n비주얼라이저 내부의 폰트를 변경합니다." },
         ["ATTACK"]  = { "Response Speed (Attack)", "Adjusts how quickly the visualizer reacts to signals.\n비주얼라이저가 신호에 반응하는 속도를 조절합니다." },
         ["RELEASE"] = { "Decay Speed (Release)", "Adjusts how quickly the visualizer fades out.\n비주얼라이저의 잔상이 사라지는 속도를 조절합니다." },
         ["ORDER"]   = { "Module Order",     "Drag and drop items to change the display order of the visualizer modules.\n마우스로 항목을 드래그하여 비주얼라이저의 표시 순서를 변경합니다." },
@@ -242,9 +242,9 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         local textcol_gray = 0x808080FF
         local pushed_vars, pushed_cols = ApplyTheme(ctx)
         reaper.ImGui_PushFont(ctx, sans_font, 12)
-        reaper.ImGui_SetNextWindowSize(ctx, 530, 740, reaper.ImGui_Cond_Once())
+        reaper.ImGui_SetNextWindowSize(ctx, 530, 760, reaper.ImGui_Cond_Once())
 
-        local visible, open = reaper.ImGui_Begin(ctx, 'JKK_Visualizer Editor v1.2', true,
+        local visible, open = reaper.ImGui_Begin(ctx, 'JKK_Visualizer Editor v1.5', true,
             reaper.ImGui_WindowFlags_NoCollapse())
         reaper.ImGui_PopFont(ctx)
         if reaper.ImGui_IsKeyPressed(ctx, reaper.ImGui_Key_Escape()) then
@@ -431,6 +431,12 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                 }
 
                 reaper.ImGui_SeparatorText(ctx, "Module Order (Drag to Reorder)")
+
+                -- Pick up reorders made by dragging inside the visualizer window
+                for i = 1, 6 do
+                    local v = reaper.gmem_read(1100 + i)
+                    if v >= 1 and v <= 6 then ui_order[i] = v end
+                end
 
                 for i, module_id in ipairs(ui_order) do
                     local is_active = ui_active[module_id]
