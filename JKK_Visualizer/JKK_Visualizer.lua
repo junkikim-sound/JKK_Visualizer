@@ -8,6 +8,12 @@
 --========================================================
 options = reaper.gmem_attach('JKK_Visualizer_Mem') 
 
+-- Low CPU mode ("PerfLite", off by default; Editor checkbox / ExtState JKK_Visualizer/PerfLite = "1").
+-- Effects: spectrum scanned once per pixel instead of once per FFT bin (same picture, ~4x fewer iterations),
+-- goniometer stride 2->4, scope stride 2->6, Symbiote vertices 150->90, and no redraw while in standby.
+PERF_LITE = (reaper.GetExtState("JKK_Visualizer", "PerfLite") == "1")
+local function read_perf_lite() PERF_LITE = (reaper.GetExtState("JKK_Visualizer", "PerfLite") == "1") end
+
 local win_w, win_h = 800, 150
 local saved_dock = tonumber(reaper.GetExtState("JKK_Visualizer", "DockState")) or 0
 gfx.init("JKK_Visualizer", win_w, win_h, saved_dock)
@@ -190,7 +196,8 @@ local ui_order = {1, 2, 3, 4, 6, 5}
 
         local write_idx = reaper.gmem_read(0)            
 
-        for i = 0, trail_len, 2 do
+        local gonio_stride = PERF_LITE and 4 or 2
+        for i = 0, trail_len, gonio_stride do
             local idx = (write_idx - i - 1) % buf_len
             local l, r = reaper.gmem_read(10000 + idx), reaper.gmem_read(110000 + idx)
 
@@ -301,6 +308,7 @@ local ui_order = {1, 2, 3, 4, 6, 5}
     end
 
     function draw_symbiote(x, y, w, h, gain)
+        local sym_points = PERF_LITE and 90 or sym_points
         local base_attack = 0.3
         local base_release = 0.3
 
@@ -449,7 +457,7 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         if is_hover then
             step = (buf_len / w) * 0.3 * (srate / 44100)
         end
-        local scan_stride = 2 
+        local scan_stride = PERF_LITE and 6 or 2
 
         for m = 0, w - 1 do
             local start_pos = (write_idx - (w - m) * step)
@@ -556,6 +564,7 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         local ox, oy = x, y + h
         local pox, poy = x, y + h
         local k = 1
+        local spec_px_mult = math.exp(k_max_log / math.max(1, w)) - 1  -- k increment ratio needed to advance one pixel
         while k <= max_k do
             local k_int = math.floor(k)
             local k_frac = k - k_int
@@ -644,7 +653,10 @@ local ui_order = {1, 2, 3, 4, 6, 5}
             pox, poy = dx, pdy
             
             local step = 1
-            if k <= 200 then
+            if PERF_LITE then
+                step = k * spec_px_mult
+                if step < 0.25 then step = 0.25 end
+            elseif k <= 200 then
                 step = 0.2
             else
                 step = k * 0.005
@@ -1047,9 +1059,17 @@ local ui_order = {1, 2, 3, 4, 6, 5}
 ----------------------------------------------------------
     local last_signal_time = reaper.time_precise()
     local g_is_standby = false
-    local target_fps = 45
-    local frame_interval = 1.0 / target_fps
-    local last_frame_time = reaper.time_precise()
+    local standby_frames, standby_sig = 0, nil
+    -- Redraw rate: ExtState TargetFps (effective fps, default 30 = every tick). defer() runs at ~30 Hz,
+    -- so we render once every N ticks (30->1, 15->2, 10->3). The ExtState is re-read about every 2 s.
+    local function read_render_every()
+        local fps = tonumber(reaper.GetExtState("JKK_Visualizer", "TargetFps")) or 30
+        local n = math.floor(30 / fps + 0.5)
+        if n < 1 then n = 1 elseif n > 6 then n = 6 end
+        return n
+    end
+    local render_every = read_render_every()
+    local tick_count = 0
 
     function run()
         local char = gfx.getchar()
@@ -1058,12 +1078,13 @@ local ui_order = {1, 2, 3, 4, 6, 5}
             reaper.Main_OnCommand(40044, 0) 
         end
 
-        local current_time = reaper.time_precise()
-        if (current_time - last_frame_time) < frame_interval then
+        tick_count = tick_count + 1
+        if tick_count % 60 == 0 then render_every = read_render_every(); read_perf_lite() end
+        if tick_count % render_every ~= 0 then
             reaper.defer(run)
             return
         end
-        last_frame_time = current_time
+        local current_time = reaper.time_precise()
 
         update_settings_from_gmem()
 
@@ -1108,6 +1129,16 @@ local ui_order = {1, 2, 3, 4, 6, 5}
         end
         
         g_is_standby = (current_time - last_signal_time) > 2.0
+
+        -- While in standby keep the last frame and skip drawing (resumes on window size/dock change or mouse activity)
+        local wnd_sig = gfx.w * 7919 + gfx.h * 31 + gfx.dock(-1)
+        if PERF_LITE and g_is_standby and standby_frames >= 2 and wnd_sig == standby_sig
+           and not is_mouse_in and gfx.mouse_cap == 0 then
+            reaper.defer(run)
+            return
+        end
+        if g_is_standby then standby_frames = standby_frames + 1 else standby_frames = 0 end
+        standby_sig = wnd_sig
 
         gfx.set(bg_r, bg_g, bg_b, bg_a)
         gfx.rect(0, 0, gfx.w, gfx.h)

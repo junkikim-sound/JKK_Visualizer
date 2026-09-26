@@ -45,6 +45,8 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         ["GAIN_SCOPE"]    = { "Scope Gain",    "Adjusts the visual sensitivity of the Scope.\nScope 모듈의 반응 감도를 조절합니다." },
         ["GAIN_SPECTRUM"] = { "Spectrum Gain", "Adjusts the visual sensitivity of the Spectrum.\nSpectrum 모듈의 반응 감도를 조절합니다." },
         ["FONT"]    = { "Font Scale",       "Adjusts the size of all text at the same ratio.\n모든 텍스트의 크기를 동일한 비율로 조절합니다." },
+        ["FPS"]     = { "Target FPS",       "Redraw rate of the visualizer. Lower = less CPU (30 / 15 / 10 / 7.5 / 6 / 5 fps). 15 fps is visibly less smooth." },
+        ["PERFLITE"] = { "Low CPU Mode",    "Cheaper drawing: spectrum scanned per pixel, coarser goniometer / scope / Symbiote, and no redraw while idle." },
         ["ATTACK"]  = { "Response Speed (Attack)", "Adjusts how quickly the visualizer reacts to signals.\n비주얼라이저가 신호에 반응하는 속도를 조절합니다." },
         ["RELEASE"] = { "Decay Speed (Release)", "Adjusts how quickly the visualizer fades out.\n비주얼라이저의 잔상이 사라지는 속도를 조절합니다." },
         ["ORDER"]   = { "Module Order",     "Drag and drop items to change the display order of the visualizer modules.\n마우스로 항목을 드래그하여 비주얼라이저의 표시 순서를 변경합니다." },
@@ -64,21 +66,41 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
 ----------------------------------------------------------
     local SECTION = "JKK_Visualizer"
 
+    -- Save only the keys that changed, and only once after the interaction ends (no ImGui item active).
+    -- Previously every changed frame wrote all 145 keys with persist=true (repeated ini writes),
+    -- which made dragging a slider very heavy.
+    local last_saved = {}
+    local save_pending = false
+    local pending_ext = {}
+    local function SetExtIfChanged(key, val)
+        if last_saved[key] ~= val then
+            reaper.SetExtState(SECTION, key, val, true)
+            last_saved[key] = val
+        end
+    end
     local function SaveAllSettings()
         for i = 1000, 1140 do
-            local val = reaper.gmem_read(i)
-            reaper.SetExtState(SECTION, "MEM_"..i, tostring(val), true)
+            SetExtIfChanged("MEM_"..i, tostring(reaper.gmem_read(i)))
         end
-        reaper.SetExtState(SECTION, "FontScale", tostring(reaper.gmem_read(1300)), true)
-        
+        SetExtIfChanged("FontScale", tostring(reaper.gmem_read(1300)))
+
         local order_str = ""
         for i = 1, 6 do order_str = order_str .. ui_order[i] .. (i < 6 and "," or "") end
-        reaper.SetExtState(SECTION, "ModuleOrder", order_str, true)
-        
+        SetExtIfChanged("ModuleOrder", order_str)
+
         local active_str = ""
         for i = 1, 6 do active_str = active_str .. (ui_active[i] and "1" or "0") .. (i < 6 and "," or "") end
-        reaper.SetExtState(SECTION, "ModuleActive", active_str, true)
+        SetExtIfChanged("ModuleActive", active_str)
+
+        for k, v in pairs(pending_ext) do SetExtIfChanged(k, v) end
+        pending_ext = {}
+        save_pending = false
     end
+    local function MarkDirty() save_pending = true end
+    local function FlushSettingsIfIdle()
+        if save_pending and not reaper.ImGui_IsAnyItemActive(ctx) then SaveAllSettings() end
+    end
+    reaper.atexit(function() if save_pending then SaveAllSettings() end end)
 
     local function LoadAllSettings()
         for i = 1000, 1140 do
@@ -152,10 +174,10 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
 
         if retval then
             local nr, ng, nb, na = reaper.ImGui_ColorConvertU32ToDouble4(new_packed_col)
-            reaper.gmem_write(mem_idx, nr); SaveAllSettings()
-            reaper.gmem_write(mem_idx + 1, ng); SaveAllSettings()
-            reaper.gmem_write(mem_idx + 2, nb); SaveAllSettings()
-            reaper.gmem_write(mem_idx + 3, na); SaveAllSettings()
+            reaper.gmem_write(mem_idx, nr); MarkDirty()
+            reaper.gmem_write(mem_idx + 1, ng); MarkDirty()
+            reaper.gmem_write(mem_idx + 2, nb); MarkDirty()
+            reaper.gmem_write(mem_idx + 3, na); MarkDirty()
         end
         if desc_id and reaper.ImGui_IsItemHovered(ctx) then
             shared_info.hovered_id = desc_id
@@ -167,10 +189,10 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
 ----------------------------------------------------------
     function ApplyDefaults()
         local function write_col(mem, col)
-            reaper.gmem_write(mem,   col[1]); SaveAllSettings()
-            reaper.gmem_write(mem+1, col[2]); SaveAllSettings()
-            reaper.gmem_write(mem+2, col[3]); SaveAllSettings()
-            reaper.gmem_write(mem+3, col[4]); SaveAllSettings()
+            reaper.gmem_write(mem,   col[1]); MarkDirty()
+            reaper.gmem_write(mem+1, col[2]); MarkDirty()
+            reaper.gmem_write(mem+2, col[3]); MarkDirty()
+            reaper.gmem_write(mem+3, col[4]); MarkDirty()
         end
         write_col(MEM_BG,   DEFAULTS.bg)
         write_col(MEM_LINE, DEFAULTS.line)
@@ -192,7 +214,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         end
         if not has_data then
             for i = 1, 6 do reaper.gmem_write(1100 + i, ui_order[i]) end
-            SaveAllSettings()
+            MarkDirty()
         end
     end
 
@@ -206,7 +228,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         local textcol_gray = 0x808080FF
         local pushed_vars, pushed_cols = ApplyTheme(ctx)
         reaper.ImGui_PushFont(ctx, sans_font, 12)
-        reaper.ImGui_SetNextWindowSize(ctx, 530, 640, reaper.ImGui_Cond_Once())
+        reaper.ImGui_SetNextWindowSize(ctx, 530, 740, reaper.ImGui_Cond_Once())
 
         local visible, open = reaper.ImGui_Begin(ctx, 'JKK_Visualizer Editor v1.2', true,
             reaper.ImGui_WindowFlags_NoCollapse())
@@ -282,25 +304,25 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                 -- 1. Gonio Gain
                 local g_gain = reaper.gmem_read(MEM_GAIN_GONIO)
                 local g_changed, g_new = reaper.ImGui_SliderDouble(ctx, "Gonio Gain", g_gain, 0.0, 1.0, "%.3f")
-                if g_changed then reaper.gmem_write(MEM_GAIN_GONIO, g_new) SaveAllSettings() end
+                if g_changed then reaper.gmem_write(MEM_GAIN_GONIO, g_new) MarkDirty() end
                 if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "GAIN_GONIO" end
 
                 -- 2. Symbiote Gain
                 local sym_gain = reaper.gmem_read(MEM_GAIN_SYMBIOTE)
                 local s_changed, s_new = reaper.ImGui_SliderDouble(ctx, "Symbiote Gain", sym_gain, 0.0, 1.0, "%.3f")
-                if s_changed then reaper.gmem_write(MEM_GAIN_SYMBIOTE, s_new) SaveAllSettings() end
+                if s_changed then reaper.gmem_write(MEM_GAIN_SYMBIOTE, s_new) MarkDirty() end
                 if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "GAIN_SYMBIOTE" end
 
                 -- 3. Scope Gain
                 local scp_gain = reaper.gmem_read(MEM_GAIN_SCOPE)
                 local scp_changed, scp_new = reaper.ImGui_SliderDouble(ctx, "Scope Gain", scp_gain, 0.0, 1.0, "%.3f")
-                if scp_changed then reaper.gmem_write(MEM_GAIN_SCOPE, scp_new) SaveAllSettings() end
+                if scp_changed then reaper.gmem_write(MEM_GAIN_SCOPE, scp_new) MarkDirty() end
                 if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "GAIN_SCOPE" end
 
                 -- 4. Spectrum Gain
                 local spec_gain = reaper.gmem_read(MEM_GAIN_SPECTRUM)
                 local sp_changed, sp_new = reaper.ImGui_SliderDouble(ctx, "Spectrum Gain", spec_gain, 0.0, 1.0, "%.3f")
-                if sp_changed then reaper.gmem_write(MEM_GAIN_SPECTRUM, sp_new) SaveAllSettings() end
+                if sp_changed then reaper.gmem_write(MEM_GAIN_SPECTRUM, sp_new) MarkDirty() end
                 if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "GAIN_SPECTRUM" end
 
                 reaper.ImGui_Spacing(ctx)
@@ -309,9 +331,29 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                     local changed, new_scale = reaper.ImGui_SliderDouble(ctx, "Font Scale", font_scale, 0.5, 2.0, "%.2fx")
                     if changed then
                         reaper.gmem_write(1300, new_scale)
-                        SaveAllSettings()
+                        MarkDirty()
                     end
                     if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "FONT" end
+
+                -- Target FPS (effective redraw rate; the visualizer draws once every N defer ticks of ~30 Hz: 30/15/10/7.5/6/5)
+                    local cur_fps = tonumber(reaper.GetExtState(SECTION, "TargetFps")) or 30
+                    local fps_changed, fps_new = reaper.ImGui_SliderInt(ctx, "Target FPS", math.floor(cur_fps + 0.5), 5, 30)
+                    if fps_changed then
+                        local n = math.floor(30 / fps_new + 0.5); if n < 1 then n = 1 elseif n > 6 then n = 6 end
+                        pending_ext["TargetFps"] = tostring(math.floor(30 / n + 0.5))
+                        MarkDirty()
+                    end
+                    if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "FPS" end
+
+                -- Low CPU Mode (PerfLite)
+                    local perf_lite = (reaper.GetExtState(SECTION, "PerfLite") == "1")
+                    local pl_changed, pl_new = reaper.ImGui_Checkbox(ctx, "Low CPU Mode", perf_lite)
+                    if pl_changed then
+                        pending_ext["PerfLite"] = pl_new and "1" or "0"
+                        MarkDirty()
+                    end
+                    if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "PERFLITE" end
+
                     reaper.ImGui_Spacing(ctx)
             -- Signal Speed
                 -- Attack Slider
@@ -323,7 +365,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                         changed_att = true
                     end
                     if changed_att then
-                        reaper.gmem_write(4, new_att); SaveAllSettings()
+                        reaper.gmem_write(4, new_att); MarkDirty()
                     end
                     if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "ATTACK" end
 
@@ -336,7 +378,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                         changed_rel = true
                     end
                     if changed_rel then
-                        reaper.gmem_write(5, new_rel); SaveAllSettings()
+                        reaper.gmem_write(5, new_rel); MarkDirty()
                     end
                     if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "RELEASE" end
                     reaper.ImGui_Spacing(ctx)
@@ -355,7 +397,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                     if rv then
                         ui_active[module_id] = new_val
                         reaper.gmem_write(1150 + module_id, new_val and 1 or 0)
-                        SaveAllSettings()
+                        MarkDirty()
                     end
                     reaper.ImGui_SameLine(ctx)
                     if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "ORDER" end
@@ -380,7 +422,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                             local item_to_move = table.remove(ui_order, source_idx)
                             table.insert(ui_order, target_idx, item_to_move)
                             for k=1, 6 do reaper.gmem_write(1100 + k, ui_order[k]) end
-                            SaveAllSettings() 
+                            MarkDirty() 
                         end
                         reaper.ImGui_EndDragDropTarget(ctx)
                     end
@@ -414,6 +456,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
             if reaper.ImGui_IsKeyPressed(ctx, reaper.ImGui_Key_Space()) then
                 reaper.Main_OnCommand(40044, 0)
             end
+            FlushSettingsIfIdle()
             reaper.ImGui_End(ctx)
         end
         reaper.ImGui_PopFont(ctx)
