@@ -136,7 +136,6 @@ the ReaPack websit
 {\pard \ql \f0 \sa0 \li720 \fi-360 6.\tx360\tab Add on Master track or Monitor FX slot {\f1 JKK_Visualizer}(jsfx file, you can find this in FX window). and Run the Action {\f1 JKK_Visualizer} \sa180\sa180\par}
 {\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 \u55357 ?\u56960 ? 2. Introduction\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 {\cf1 [image: https://github.com/user-attachments/assets/908ef485-3651-493e-9ec7-62b69f6dda90]\cf0}\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 Key Features\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\b Multi-Module Interface}: Monitor LUFS, Goniometer, Symbiote, Scope, and Spectrum modules simultaneously on a single screen. Click the window to reset.\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\b Dynamic Symbiote}: A unique visualizer that evolves based on low-frequency responses, allowing you to "feel" the sound texture.\par}
@@ -164,6 +163,16 @@ the ReaPack websit
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 v1.2.6 (Apr 18, 2026)\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Added Spectrogram FREEZE feature.\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab CPU optimization.\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 v1.5.0 (Sep 26, 2026, contributed by {\field{\*\fldinst{HYPERLINK "https://github.com/tobokegao"}}{\fldrslt{\ul
+tobokegao
+}}}
+)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Performance\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Editor save optimization, Target FPS setting, Low CPU Mode\sa180\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab LUFS & Font\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Two-column Momentary and Short-term LUFS separation, LUFS value size control, Goniometer improvements\sa180\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Layout & Dock\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Vertical layout addition, drag-to-resize and drag-to-reorder modules, dock position memory\sa180\sa180\par}
 {\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 \u55356 ?\u57098 ? About the Author\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Junki Kim Game Sound Designer Specializing in game audio implementation and REAPER workflow optimization.\par}
