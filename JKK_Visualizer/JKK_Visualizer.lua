@@ -2,9 +2,11 @@
 -- @title JKK_Visualizer
 -- @description JKK_Visualizer
 -- @author Junki Kim
--- @version 1.2.8
+-- @version 1.5.0
 -- @provides 
 --     [effect] JKK_Visualizer.jsfx
+-- Huge thanks to Tobokegao (Japan) for helping update (to6okegao@gmail.com)
+-- he helped some features(lighter Editor saving, Target FPS setting, Low CPU Mode)
 --========================================================
 options = reaper.gmem_attach('JKK_Visualizer_Mem') 
 
