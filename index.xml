@@ -145,7 +145,7 @@ the ReaPack websit
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Language: Lua\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Library: REAPER v7.0+ / Dear ImGui\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Engine: JSFX-to-Lua Data Streaming via gmem\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Optimization: Optimized for low CPU usage even at a smooth 60FPS\sa180\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Optimization: Optimized for low CPU usage even at a smooth 30FPS\sa180\par}
 {\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 \u55357 ?\u56529 ? 3. Update Log\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 v1.0.2 (Feb 22, 2026)\par}
