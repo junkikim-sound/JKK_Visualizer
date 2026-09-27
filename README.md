@@ -55,7 +55,7 @@ ReaImGui must be installed to use JKK_Visualizer.
 - Language: Lua 
 - Library: REAPER v7.0+ / Dear ImGui 
 - Engine: JSFX-to-Lua Data Streaming via gmem 
-- Optimization: Optimized for low CPU usage even at a smooth 60FPS
+- Optimization: Optimized for low CPU usage even at a smooth 30FPS
 
 ---
 ## 📑 3. Update Log
